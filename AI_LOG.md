@@ -129,3 +129,22 @@ Herramienta: Claude Code (Anthropic). Modelo: Claude Opus 5.5.
 - **Prompt:** «Arregla lo del formato como un fix.»
 - **Incoherencias:** en el frontend había 22 ficheros que ya no cumplían Prettier antes del examen. Solo 3 (los de `dates-list`) se han tocado en el Mínimo 1.
 - **Solución:** `prettier --write` solo en `dates-list.ts`, `.html` y `.spec.ts`, en su propia rama de fix. Comprobamos que, quitando espacios, saltos de línea y comas finales, el contenido es idéntico (solo cambia el formato). Los tests, el lint y el build siguen igual. Los otros 19 ficheros no se tocan para no mezclar cambios ajenos al examen.
+
+# Sprint 2
+
+Modelo en el Sprint 2: Claude Fable 5.2.
+
+### 1. Estructura: fuera el Angular y esqueleto del monorepo (`feat/estructura`)
+
+- **Pregunta:** cómo pasar el repo del backoffice en Angular a un monorepo con la web en React, la app del móvil y lo compartido, sin perder el historial.
+- **Prompt:** «Según la planificación establecida previamente, vamos a proceder de esta forma. Empezamos por la estructura, que es la base de todo. Las tareas son las del bloque 1 del plan (de la 1 a la 15). [...] Después el frontend. Hay que quitar todo lo de Angular y hacer limpieza, pero se quedan los AI_LOG y el historial de git, porque tiene que haber continuidad. Luego el esqueleto del monorepo: la web, el móvil y lo compartido. La web y el móvil tienen que tener el mismo estilo visual, el del blog, así que el tema va en un solo sitio, y desde el principio quiero usar bien el CSS global, para ir logrando un estilo unificado y no crear cosas únicas por página. En lo compartido van los modelos, el cliente HTTP con JSON Web Token para absolutamente todo y los servicios de la API: es pasar lo que teníamos en Angular a React. La web se hace a partir del Seminario 8 de React y programando con su mismo estilo; al menos en estos primeros pasos, es básicamente adaptar el Seminario 8 a lo nuestro. Los roles son solo dos: administrador y estudiante. Las cosas se hacen por feats: una rama por grupo de tareas, como en el Mínimo 1, y un commit por tarea. Dime el plan de acción.» Después de ver el plan lo aprobamos tal cual («procede») y le pedimos que, si salía alguna incompatibilidad que no hubiéramos tenido en cuenta, la dejara bien resuelta pensando en el futuro.
+- **Incoherencias:**
+  - El Seminario 8 de React pide React `^19.2.8` y el de React Native fija React `19.2.3`, que es la versión exacta que necesita Expo SDK 57. En un monorepo las dependencias se instalan juntas, y dos copias de React dan errores al ejecutar.
+  - El plan ponía la app del móvil en esta rama, pero tiene que arrancar leyendo el tema de `packages/shared`, que se hace en la rama siguiente.
+  - El plan decía Node 22 en el `.nvmrc`; el backend ya usa Node 24 y Expo SDK 57 pide 22.13 como mínimo.
+- **Solución:**
+  - Tag `angular-sprint1` en el último commit con Angular y un commit que solo borra: código, configuración, GUIA y EJERCICIO. Se quedan el historial, los AI_LOG, el LOGS y el mockup.
+  - `package.json` raíz con npm workspaces (`apps/*` y `packages/*`) y los comandos comunes (`dev:web`, `dev:movil`, `lint`, `typecheck`, `test` y `build`); `.nvmrc` con Node 24; `.gitignore`, Prettier y oxlint con una sola configuración para todo; y `packages/shared` como paquete vacío.
+  - React se fija a `19.2.3` en la raíz con `overrides`, para que la web y el móvil usen la misma copia.
+  - Una regla del linter prohíbe `window`, `document` y `localStorage` dentro de `packages/shared`, porque ese código también se ejecuta en el móvil.
+  - La app del móvil pasa a su propia rama (`feat/movil-base`), después de `feat/shared`.
