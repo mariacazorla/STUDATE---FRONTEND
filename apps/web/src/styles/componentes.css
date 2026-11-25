@@ -1,0 +1,1717 @@
+/* ==========================================================================================
+   CSS global de Studate (2 de 2): los componentes.
+
+   Las piezas que se repiten en todas las pantallas, con el aspecto del blog. Cada una es una
+   clase: una pantalla nueva las combina y no escribe estilos propios.
+
+     .btn  .btn2          botón principal y secundario (.btn-icono: redondo, solo con icono)
+     .card                tarjeta
+     .chip                etiqueta redonda
+     .av  .ini-av  .ico   foto, iniciales e icono
+     .campo               campo de formulario con su etiqueta, ayuda y error
+     .aviso               mensaje de error o de confirmación
+     .tabla               tabla de un listado
+     .pag                 paginación
+     .vacio               cuando no hay nada que enseñar
+     .esq                 esqueleto mientras carga
+     .acceso              las pantallas de login y registro: portada y formulario
+     .capa  .modal        ventana de confirmación
+     .avisos-flotantes    avisos temporales
+
+   Los valores salen todos de las variables del tema (ver global.css).
+   ========================================================================================== */
+
+/* ---------- Botones ---------- */
+
+/* Botón principal: rosa, redondo y con la letra de camiseta. Uno por pantalla, para la acción importante */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--esp-sm);
+  height: 46px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: var(--r-pastilla);
+  background: var(--rosa-boton);
+  box-shadow: var(--sombra-boton);
+  color: var(--blanco);
+  font: 400 14px/1 var(--f-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  text-decoration: none;
+}
+
+/* Botón secundario: blanco con borde, para el resto de acciones */
+.btn2 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--esp-sm);
+  height: 42px;
+  padding: 0 var(--esp-lg);
+  border: 1.5px solid var(--borde-campo);
+  border-radius: var(--r-pastilla);
+  background: var(--blanco);
+  color: var(--noche);
+  font: 600 14px/1 var(--f-text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn2:hover {
+  background: var(--niebla);
+  text-decoration: none;
+}
+
+/* Acción que no se puede deshacer (eliminar, bloquear) */
+.btn.peligro {
+  background: var(--ko);
+  box-shadow: none;
+}
+
+/* Ocupa todo el ancho de su contenedor */
+.btn.entero,
+.btn2.entero {
+  width: 100%;
+}
+
+/* Botón redondo con solo un icono (cerrar sesión, volver...). El texto va en .solo-lectores */
+.btn-icono {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1.5px solid var(--borde-campo);
+  border-radius: 50%;
+  background: var(--blanco);
+  color: var(--noche);
+}
+
+.btn-icono:hover {
+  background: var(--niebla);
+}
+
+.btn:disabled,
+.btn2:disabled {
+  opacity: 0.55;
+  box-shadow: none;
+}
+
+/* Al pulsar se encoge un poco, salvo si el usuario ha pedido menos animaciones */
+@media (prefers-reduced-motion: no-preference) {
+  .btn {
+    transition: transform 0.12s ease;
+  }
+
+  .btn:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+}
+
+/* ---------- Tarjeta ---------- */
+.card {
+  border: 1px solid var(--borde);
+  border-radius: var(--r-tarjeta);
+  background: var(--blanco);
+  box-shadow: var(--sombra-tarjeta);
+}
+
+/* Tarjeta con relleno, para cuando dentro solo hay texto o un formulario */
+.card.rellena {
+  padding: var(--esp-xl);
+}
+
+/* ---------- Chip ---------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--r-pastilla);
+  background: var(--niebla);
+  color: var(--rosa-boton);
+  font: 600 12px/1 var(--f-text);
+  white-space: nowrap;
+}
+
+.chip.azul {
+  background: var(--azul-suave);
+  color: var(--azul);
+}
+
+.chip.ok {
+  background: var(--ok-suave);
+  color: var(--ok-texto);
+}
+
+.chip.ko {
+  background: var(--ko-suave);
+  color: var(--ko-texto);
+}
+
+.chip.maiz {
+  background: var(--maiz);
+  color: var(--noche);
+}
+
+/* ---------- Foto, iniciales e icono ---------- */
+
+/* Foto redonda de una persona */
+.av {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--blanco);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--linea);
+  object-fit: cover;
+}
+
+/* Círculo con las iniciales, para quien no tiene foto */
+.ini-av {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--azul-suave);
+  color: var(--azul);
+  font: 700 12px/1 var(--f-text);
+}
+
+/* Icono de línea: coge el color del texto que tiene alrededor */
+.ico {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------- Campo de formulario ---------- */
+.campo {
+  display: grid;
+  gap: 6px;
+  /* Si el campo de al lado es más alto, este no se estira: se queda arriba */
+  align-content: start;
+}
+
+.campo label {
+  font: 600 13px/1.2 var(--f-text);
+}
+
+.campo input,
+.campo select,
+.campo textarea {
+  width: 100%;
+  height: 46px;
+  padding: 0 14px;
+  border: 1.5px solid var(--borde-campo);
+  border-radius: var(--r-campo);
+  background: var(--blanco);
+  color: var(--noche);
+  font: 400 15px/1.2 var(--f-text);
+}
+
+.campo textarea {
+  height: 92px;
+  padding: var(--esp-md) 14px;
+  resize: none;
+}
+
+.campo input:focus-visible,
+.campo select:focus-visible,
+.campo textarea:focus-visible {
+  border-color: var(--azul);
+  outline-offset: 0;
+}
+
+/* Texto de ayuda debajo del campo */
+.campo .ayuda {
+  color: var(--gris);
+  font-size: 12.5px;
+}
+
+/* Campo con error: borde rojo y el motivo debajo */
+.campo.mal input,
+.campo.mal select,
+.campo.mal textarea {
+  border-color: var(--ko);
+}
+
+.campo .error {
+  color: var(--ko);
+  font-size: 12.5px;
+}
+
+/* ---------- Aviso ---------- */
+
+/* Mensaje de error encima de un formulario o de un listado */
+.aviso {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-sm);
+  padding: 10px var(--esp-md);
+  border-radius: var(--r-campo);
+  background: var(--ko-suave);
+  color: var(--ko-texto);
+  font-size: 13.5px;
+}
+
+/* Lo mismo en verde, para confirmar que algo ha ido bien */
+.aviso.ok {
+  background: var(--ok-suave);
+  color: var(--ok-texto);
+}
+
+/* ---------- Tabla ---------- */
+
+/* La tabla va dentro de una tarjeta; si no cabe a lo ancho, se desplaza ella y no la página */
+.tabla-wrap {
+  overflow-x: auto;
+}
+
+/* Si la tabla es lo primero de la tarjeta, sus esquinas de arriba siguen la curva de la tarjeta */
+.card > .tabla-wrap:first-child {
+  border-radius: var(--r-tarjeta) var(--r-tarjeta) 0 0;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tabla th {
+  padding: var(--esp-md);
+  border-bottom: 1px solid var(--linea);
+  background: var(--fondo);
+  color: var(--gris);
+  font: 700 11px/1 var(--f-text);
+  letter-spacing: 0.08em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.tabla td {
+  padding: 10px var(--esp-md);
+  border-bottom: 1px solid var(--borde);
+  vertical-align: middle;
+}
+
+.tabla tr:hover td {
+  background: var(--niebla);
+}
+
+/* ---------- Paginación ---------- */
+.pag {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--esp-sm);
+  padding: var(--esp-md);
+  color: var(--gris);
+  font-size: 13px;
+}
+
+.pag .btns {
+  display: flex;
+  gap: 6px;
+}
+
+/* ---------- Vacío ---------- */
+
+/* Lo que se enseña cuando una lista no tiene nada: explica por qué y qué se puede hacer */
+.vacio {
+  display: grid;
+  justify-items: start;
+  gap: var(--esp-md);
+  padding: 28px 22px;
+  border: 1.5px dashed var(--borde-vacio);
+  border-radius: var(--r-tarjeta);
+  background: var(--blanco);
+}
+
+/* ---------- Esqueleto de carga ---------- */
+
+/* Barras grises con la forma de lo que va a llegar, mientras la API responde */
+.esq {
+  display: block;
+  height: 14px;
+  margin: 10px 0;
+  border-radius: var(--r-pequeno);
+  background: var(--esqueleto);
+}
+
+.esq.alto {
+  height: 220px;
+  border-radius: var(--r-tarjeta);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .esq {
+    animation: esq-latido 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes esq-latido {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* ---------- Acceso (login y registro) ----------
+   Las dos pantallas sin menú: la portada con el lema y, al lado, el formulario.
+   En el móvil la portada va arriba; a partir de 900 px, a la izquierda y a toda la altura. */
+.acceso {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  min-height: 100%;
+}
+
+.acceso .portada {
+  padding: 26px 22px 30px;
+  background: linear-gradient(140deg, var(--azul) 0%, var(--morado) 55%, var(--rosa-boton) 120%);
+  color: var(--blanco);
+}
+
+/* Sobre el fondo de color, el logo cambia a blanco y amarillo */
+.acceso .portada .marca b {
+  color: var(--blanco);
+}
+
+.acceso .portada .marca small {
+  color: var(--maiz);
+}
+
+.acceso .portada .lema {
+  margin: 36px 0 10px;
+  font: 900 34px/1.05 var(--f-display);
+  font-stretch: 125%;
+}
+
+.acceso .portada .lema em {
+  color: var(--maiz);
+  font-style: normal;
+}
+
+.acceso .portada p:not(.lema) {
+  max-width: 34ch;
+  opacity: 0.9;
+}
+
+.acceso .form {
+  display: grid;
+  align-content: start;
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto;
+  padding: var(--esp-xl) 22px var(--esp-xxl);
+}
+
+@media (min-width: 900px) {
+  .acceso {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    grid-template-rows: 1fr;
+  }
+
+  .acceso .portada {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 48px 56px;
+  }
+
+  .acceso .portada .lema {
+    font-size: 62px;
+  }
+
+  .acceso .form {
+    align-content: center;
+    padding: 48px;
+  }
+}
+
+/* ---------- Ventana de confirmación ---------- */
+
+/* La capa oscura que tapa la pantalla */
+.capa {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: var(--esp-lg);
+  background: color-mix(in srgb, var(--noche) 55%, transparent);
+}
+
+.modal {
+  display: grid;
+  gap: var(--esp-md);
+  width: 100%;
+  max-width: 420px;
+  padding: var(--esp-xl);
+  border-radius: var(--r-tarjeta);
+  background: var(--blanco);
+  box-shadow: var(--sombra-tarjeta);
+}
+
+.modal .acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--esp-sm);
+  margin-top: var(--esp-sm);
+}
+
+/* ==========================================================================================
+   La Orla (pantalla del estudiante) y ¡Date!
+   ========================================================================================== */
+
+.orla {
+  display: grid;
+  gap: var(--esp-lg);
+}
+
+.orla-cab {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--esp-sm) var(--esp-md);
+}
+
+/* La cuota de A+ de hoy, en la cabecera */
+.cupo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-sm);
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--borde);
+  border-radius: var(--r-pastilla);
+  background: var(--blanco);
+  font: 600 13.5px/1 var(--f-text);
+}
+
+.cupo b {
+  color: var(--azul);
+}
+
+.cupo .est {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--maiz);
+  color: var(--noche);
+  font-size: 11px;
+}
+
+/* La columna central: la tarjeta, los botones y la pista del teclado, centrados y estrechos */
+.orla-centro {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+}
+
+/* ---------- La tarjeta del Expediente ---------- */
+.exp {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 420px;
+  /* La tarjeta se arrastra; que no se seleccione el texto ni salga el menú del navegador al mantener */
+  user-select: none;
+  cursor: grab;
+}
+
+.exp:active {
+  cursor: grabbing;
+}
+
+.exp .foto {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  background: var(--niebla);
+}
+
+.exp .foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Si no hay foto, las iniciales grandes sobre el fondo de marca */
+.exp .foto-sin {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: var(--azul-suave);
+  color: var(--azul);
+  font: 900 72px/1 var(--f-display);
+}
+
+/* Los datos van sobre la foto, con un degradado para que se lean */
+.exp .sobre {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 70px var(--esp-lg) var(--esp-lg);
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--noche) 92%, transparent));
+  color: var(--blanco);
+}
+
+.exp .nombre {
+  margin: 0 0 6px;
+  font: 900 30px/1 var(--f-display);
+  font-stretch: 125%;
+}
+
+.exp .dato {
+  font-size: 14px;
+  opacity: 0.95;
+}
+
+.exp .gustos {
+  margin-top: var(--esp-sm);
+  font-size: 13.5px;
+  opacity: 0.95;
+}
+
+.exp .bio-exp {
+  margin: var(--esp-sm) 0 0;
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+/* Los sellos del gesto: A+ (verde, a la derecha) y F (rojo, a la izquierda), aparecen al deslizar */
+.exp .sello {
+  position: absolute;
+  top: 24px;
+  padding: 8px 18px;
+  border: 5px solid;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--blanco) 85%, transparent);
+  font: 900 15px/1 var(--f-display);
+  letter-spacing: 0.1em;
+  pointer-events: none;
+}
+
+.exp .sello b {
+  font-size: 44px;
+}
+
+.exp .sello-a {
+  right: 18px;
+  transform: rotate(14deg);
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
+.exp .sello-f {
+  left: 18px;
+  transform: rotate(-14deg);
+  border-color: var(--ko);
+  color: var(--ko);
+}
+
+/* ---------- Los botones de voto ---------- */
+.acciones {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+}
+
+.voto-et {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  font: 400 10.5px/1 var(--f-label);
+  letter-spacing: 0.08em;
+  color: var(--gris);
+}
+
+.voto {
+  display: grid;
+  place-items: center;
+  width: 70px;
+  height: 70px;
+  border: 0;
+  border-radius: 50%;
+  color: var(--blanco);
+  font: 900 26px/1 var(--f-display);
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--noche) 22%, transparent);
+}
+
+.voto.f {
+  background: var(--ko);
+}
+
+.voto.a {
+  background: var(--ok);
+}
+
+.voto:disabled {
+  opacity: 0.4;
+  box-shadow: none;
+}
+
+.deshacer {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 1.5px solid var(--borde-campo);
+  border-radius: 50%;
+  background: var(--blanco);
+  color: var(--gris);
+}
+
+.deshacer:disabled {
+  opacity: 0.4;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .voto:active:not(:disabled) {
+    transform: scale(0.95);
+  }
+}
+
+/* La pista del teclado (y el aviso de cupo lleno) */
+.teclas {
+  color: var(--gris);
+  font-size: 12.5px;
+  text-align: center;
+}
+
+.teclas kbd {
+  padding: 2px 6px;
+  border: 1px solid var(--borde-campo);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--blanco);
+  font: 600 11.5px/1 var(--f-text);
+}
+
+/* ---------- Aviso de deshacer, con cuenta atrás ---------- */
+.toast {
+  position: sticky;
+  bottom: var(--esp-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--esp-md);
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: var(--esp-md) 14px;
+}
+
+.toast .anillo {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.toast .anillo span {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--blanco);
+  color: var(--azul);
+  font: 700 13px/1 var(--f-text);
+}
+
+.toast-texto {
+  flex: 1;
+  font-size: 14px;
+}
+
+/* ---------- ¡Tenéis Date! (pantalla completa) ---------- */
+.match {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 28px 20px;
+  background: radial-gradient(circle at 30% 20%, var(--morado) 0, transparent 50%), linear-gradient(160deg, var(--azul), var(--rosa-boton));
+  color: var(--blanco);
+  text-align: center;
+  overflow: auto;
+}
+
+.match-in {
+  display: grid;
+  justify-items: center;
+  gap: var(--esp-lg);
+  width: 100%;
+  max-width: 440px;
+}
+
+.match h2 {
+  margin: 0;
+  font: 900 64px/0.95 var(--f-display);
+  font-stretch: 125%;
+  text-shadow: 4px 4px 0 var(--rosa-boton);
+}
+
+.pareja {
+  display: flex;
+  justify-content: center;
+}
+
+.pareja img,
+.pareja-sin {
+  width: 96px;
+  height: 96px;
+  border: 4px solid var(--blanco);
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.pareja-sin {
+  display: grid;
+  place-items: center;
+  background: var(--azul-suave);
+  color: var(--azul);
+  font: 900 30px/1 var(--f-display);
+}
+
+.pareja img + img,
+.pareja img + .pareja-sin,
+.pareja-sin + img {
+  margin-left: -18px;
+}
+
+.match-nombres {
+  margin: 0;
+  font-weight: 600;
+}
+
+.sorteo {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: var(--r-tarjeta);
+  background: var(--blanco);
+  color: var(--noche);
+  text-align: left;
+}
+
+/* Sobre el fondo de color, los botones del ¡Date! cambian: amarillo el principal, borde claro el otro */
+.match .btn {
+  background: var(--maiz);
+  box-shadow: none;
+  color: var(--noche);
+}
+
+.match .btn2 {
+  border-color: color-mix(in srgb, var(--blanco) 50%, transparent);
+  background: transparent;
+  color: var(--blanco);
+}
+
+@media (min-width: 560px) {
+  .match h2 {
+    font-size: 72px;
+  }
+}
+
+/* ==========================================================================================
+   Mi perfil
+   ========================================================================================== */
+
+/* La cabecera del perfil: la foto grande y, al lado, los botones para cambiarla */
+.perfil-cab {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--esp-lg);
+}
+
+.foto-p {
+  flex: none;
+  width: 96px;
+  height: 96px;
+  border: 3px solid var(--blanco);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--linea);
+  object-fit: cover;
+}
+
+.foto-p-sin {
+  display: grid;
+  place-items: center;
+  background: var(--azul-suave);
+  color: var(--azul);
+  font: 900 30px/1 var(--f-display);
+}
+
+/* Cada contacto de confianza: una tarjeta pequeña con sus tres campos y el botón de quitar */
+.contacto {
+  display: grid;
+  gap: var(--esp-md);
+  padding: var(--esp-lg);
+  box-shadow: none;
+}
+
+/* Los botones dentro de una rejilla no se estiran a todo el ancho */
+.contacto .btn2 {
+  justify-self: start;
+}
+
+/* ---------- Avisos temporales (Context API) ---------- */
+.avisos-flotantes {
+  position: fixed;
+  right: var(--esp-lg);
+  bottom: var(--esp-lg);
+  left: var(--esp-lg);
+  z-index: 1100;
+  display: grid;
+  justify-items: end;
+  gap: var(--esp-sm);
+  pointer-events: none;
+}
+
+.aviso-flotante {
+  padding: var(--esp-md) var(--esp-lg);
+  border-radius: var(--r-campo);
+  background: var(--noche);
+  box-shadow: var(--sombra-tarjeta);
+  color: var(--blanco);
+  font-size: 14px;
+}
+
+/* ==========================================================================================
+   Mis Dates y el chat
+   ========================================================================================== */
+
+/* La pantalla: en el móvil, una columna (la lista o la conversación); en escritorio, las dos */
+.dates {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.lista-col {
+  display: grid;
+  gap: 14px;
+}
+
+/* Con un Date abierto, en el móvil solo se ve la conversación */
+.dates.con-chat .lista-col {
+  display: none;
+}
+
+/* Sin Date abierto, en el móvil la columna del chat (el "elige un Date") no se enseña */
+.dates:not(.con-chat) .chatcol {
+  display: none;
+}
+
+/* Las dos bandejas, como pestañas dentro de una tarjeta blanca */
+.bandejas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid var(--borde);
+  border-radius: var(--r-pastilla);
+  background: var(--blanco);
+}
+
+.bandejas button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 40px;
+  border: 0;
+  border-radius: var(--r-pastilla);
+  background: none;
+  color: var(--noche);
+  font: 700 14px/1 var(--f-text);
+}
+
+.bandejas button .ico {
+  width: 16px;
+  height: 16px;
+}
+
+.bandejas button[aria-pressed='true'] {
+  background: var(--azul);
+  color: var(--blanco);
+}
+
+/* El contador de cada bandeja */
+.bandejas .n {
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: var(--r-pastilla);
+  background: var(--rosa-boton);
+  color: var(--blanco);
+  font: 700 11px/18px var(--f-text);
+}
+
+.bandejas .n.azul {
+  background: var(--noche);
+}
+
+.bandejas button[aria-pressed='true'] .n {
+  background: var(--blanco);
+  color: var(--azul);
+}
+
+/* El aviso de los Dates que esperan que escriba yo */
+.avisador {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--borde-vacio);
+  border-radius: var(--r-tarjeta);
+  background: var(--niebla);
+  font-size: 14px;
+}
+
+.avisador .ico {
+  flex: none;
+  color: var(--rosa-boton);
+}
+
+/* La lista de conversaciones: una tarjeta por Date, que es un botón entero */
+.conv {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.conv .card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: center;
+  width: 100%;
+  padding: 12px;
+  border: 0;
+  text-align: left;
+}
+
+.conv .card.sel {
+  box-shadow:
+    inset 4px 0 0 var(--azul),
+    var(--sombra-tarjeta);
+}
+
+.conv .quien {
+  display: grid;
+  min-width: 0;
+}
+
+.conv .quien b {
+  font: 800 16px/1.2 var(--f-display);
+}
+
+/* La última línea: a quién le toca o cuándo empezó; con puntos suspensivos si no cabe */
+.conv .ult {
+  overflow: hidden;
+  color: var(--gris);
+  font-size: 13.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conv .der {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+  color: var(--gris);
+  font-size: 12.5px;
+}
+
+/* El reloj: cuánto queda para que caduque un Date pendiente */
+.reloj {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--rosa-boton);
+  font: 600 12px/1 var(--f-text);
+}
+
+.reloj .ico {
+  width: 13px;
+  height: 13px;
+}
+
+/* ---------- La conversación ---------- */
+.charla {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: calc(100dvh - 190px);
+  min-height: 420px;
+  overflow: hidden;
+}
+
+.charla-cab {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.charla-cab .quien {
+  min-width: 0;
+}
+
+.charla-cab .quien b {
+  display: block;
+  font: 800 16px/1.2 var(--f-display);
+}
+
+.charla-cab .quien span {
+  display: block;
+  overflow: hidden;
+  color: var(--gris);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Los botones de la cabecera del chat (volver, y en el bloque de seguridad, ayuda y más opciones) */
+.charla-cab .acc {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.icb {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1.5px solid var(--borde-campo);
+  border-radius: var(--r-campo);
+  background: var(--blanco);
+  color: var(--noche);
+}
+
+.icb.alerta {
+  border-color: var(--ko-suave);
+  color: var(--ko);
+}
+
+/* La franja del estado del Date: el chip de la bandeja, el turno y la prórroga */
+.franja-turno {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  padding: 8px 14px;
+  background: var(--niebla);
+  font-size: 13px;
+}
+
+.franja-turno .btn2 {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+/* Los mensajes: se desplazan ellos, no la página, y los nuevos van abajo */
+.mensajes {
+  display: grid;
+  gap: 8px;
+  align-content: end;
+  padding: 14px;
+  overflow-y: auto;
+  background: var(--fondo);
+}
+
+.mensajes .vacio {
+  align-self: center;
+}
+
+.msg {
+  max-width: 78%;
+  padding: 10px 14px;
+  border: 1px solid var(--linea);
+  border-radius: 18px 18px 18px 6px;
+  background: var(--blanco);
+  font-size: 14.5px;
+  overflow-wrap: anywhere;
+}
+
+.msg small {
+  display: block;
+  margin-top: 2px;
+  color: var(--gris);
+  font-size: 11px;
+  text-align: right;
+}
+
+/* Los míos, a la derecha y en azul */
+.msg.yo {
+  justify-self: end;
+  border: 0;
+  border-radius: 18px 18px 6px 18px;
+  background: var(--azul);
+  color: var(--blanco);
+}
+
+.msg.yo small {
+  color: color-mix(in srgb, var(--blanco) 75%, transparent);
+}
+
+/* El separador de día entre mensajes */
+.dia-sep {
+  justify-self: center;
+  padding: 6px 10px;
+  border: 1px solid var(--linea);
+  border-radius: var(--r-pastilla);
+  background: var(--blanco);
+  color: var(--gris);
+  font: 400 10.5px/1 var(--f-label);
+  letter-spacing: 0.08em;
+}
+
+/* Cargar mensajes anteriores, arriba del todo */
+.mensajes .btn2 {
+  justify-self: center;
+}
+
+/* La caja de escribir */
+.escribir {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--borde);
+  background: var(--blanco);
+}
+
+.escribir input {
+  flex: 1;
+  min-width: 0;
+  height: 46px;
+  padding: 0 16px;
+  border: 1.5px solid var(--borde-campo);
+  border-radius: var(--r-pastilla);
+  font: 400 15px/1 var(--f-text);
+}
+
+.escribir input:disabled {
+  background: var(--esqueleto);
+}
+
+.enviar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--rosa-boton);
+  color: var(--blanco);
+}
+
+.enviar:disabled {
+  background: var(--borde-vacio);
+}
+
+/* Lo que solo se ve en el móvil (el botón de volver) */
+.solo-escritorio {
+  display: none !important;
+}
+
+@media (min-width: 900px) {
+  /* En escritorio, la bandeja y la conversación a la vez */
+  .dates.con-chat,
+  .dates:not(.con-chat) {
+    grid-template-columns: 340px minmax(0, 1fr);
+  }
+
+  .dates.con-chat .lista-col,
+  .dates:not(.con-chat) .chatcol {
+    display: block;
+  }
+
+  .dates .chatcol .vacio {
+    min-height: 420px;
+    place-content: center;
+    justify-items: center;
+  }
+
+  .dates .chatcol .vacio .ico {
+    width: 40px;
+    height: 40px;
+    color: var(--rosa-boton);
+  }
+
+  .charla {
+    height: calc(100vh - 56px - 56px);
+    min-height: 560px;
+  }
+
+  .solo-movil {
+    display: none !important;
+  }
+
+  .solo-escritorio {
+    display: block !important;
+  }
+}
+
+/* ==========================================================================================
+   Seguridad: las ventanas de bloquear, mandar un parte y pedir ayuda
+   ========================================================================================== */
+
+/* La ventana: centrada en escritorio y pegada abajo, como una hoja, en el móvil */
+.ventana {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+  max-width: 460px;
+  padding: 20px;
+}
+
+@media (max-width: 639px) {
+  .capa:has(.ventana) {
+    align-items: end;
+    padding: 0;
+  }
+
+  .ventana {
+    max-width: none;
+    padding-bottom: 28px;
+    border-radius: 22px 22px 0 0;
+  }
+}
+
+/* El titular de la ventana */
+.t-ventana {
+  font: 800 22px/1.15 var(--f-display);
+}
+
+/* Las opciones de una ventana: los motivos del parte (radios) o las acciones del menú (botones) */
+.opciones {
+  display: grid;
+  gap: 8px;
+}
+
+.opciones label,
+.opciones .opcion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 12px;
+  border: 1.5px solid var(--borde-campo);
+  border-radius: var(--r-campo);
+  background: var(--blanco);
+  font-size: 14.5px;
+  text-align: left;
+}
+
+.opciones label.sel {
+  border-color: var(--azul);
+  background: var(--azul-suave);
+}
+
+.opciones label input {
+  margin: 0;
+  accent-color: var(--azul);
+}
+
+.opciones .opcion.peligro {
+  border-color: var(--ko-suave);
+  color: var(--ko);
+}
+
+/* El aviso de "si estás en peligro, llama al 112" */
+.urg {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r-campo);
+  background: var(--ko-suave);
+  color: var(--ko-texto);
+  font-size: 13.5px;
+}
+
+.urg b {
+  font-size: 17px;
+}
+
+.urg .ico {
+  flex: none;
+}
+
+/* Los botones de la ventana, a la derecha */
+.botonera {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Un botón con icono dentro */
+.botonera .btn .ico,
+.botonera .btn2 .ico {
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+}
+
+/* El botón de más opciones en la esquina de la foto del Expediente */
+.exp .mas {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  border-color: transparent;
+  background: color-mix(in srgb, var(--blanco) 85%, transparent);
+}
+
+/* La etiqueta de la ventana del botón de ayuda: en rojo, no en rosa, porque es la única acción de peligro */
+.et.peligro {
+  color: var(--ko);
+}
+
+/* ==========================================================================================
+   Backoffice: cabeceras, filtros, tablas con acciones y tarjetas en el móvil
+   ========================================================================================== */
+
+/* La cabecera de cada pantalla: el título y, a la derecha, el botón principal */
+.bo-cab {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+
+/* Los filtros: la búsqueda (que estira) y los desplegables */
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.filtros .buscar {
+  display: flex;
+  flex: 1 1 220px;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 12px;
+  border: 1.5px solid var(--borde-campo);
+  border-radius: var(--r-campo);
+  background: var(--blanco);
+  color: var(--gris);
+}
+
+.filtros .buscar .ico {
+  flex: none;
+}
+
+.filtros .buscar input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--noche);
+  font-size: 14px;
+}
+
+.filtros select {
+  height: 42px;
+  padding: 0 10px;
+  border: 1.5px solid var(--borde-campo);
+  border-radius: var(--r-campo);
+  background: var(--blanco);
+  color: var(--noche);
+  font: 500 14px/1 var(--f-text);
+}
+
+/* Un filtro de marcar (solo archivados) */
+.filtros .marcar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 42px;
+  padding: 0 12px;
+  border: 1.5px solid var(--borde-campo);
+  border-radius: var(--r-campo);
+  background: var(--blanco);
+  font-size: 14px;
+}
+
+.filtros .marcar input {
+  margin: 0;
+  accent-color: var(--azul);
+}
+
+/* Una persona en una tabla: avatar pequeño, nombre y detalle */
+.persona {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.persona .av,
+.persona .ini-av {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  font-size: 12px;
+}
+
+.persona > span {
+  min-width: 0;
+}
+
+.persona b {
+  display: block;
+  font-size: 14px;
+}
+
+.persona > span > span {
+  display: block;
+  color: var(--gris);
+  font-size: 12.5px;
+}
+
+/* Dos avatares solapados: la pareja de un Date */
+.persona .av + .av,
+.persona .av + .ini-av,
+.persona .ini-av + .av,
+.persona .ini-av + .ini-av {
+  margin-left: -14px;
+}
+
+/* Las acciones de una fila: botones pequeños a la derecha */
+.acc-fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.acc-fila button {
+  height: 34px;
+  padding: 0 10px;
+  border: 1.5px solid var(--borde-campo);
+  border-radius: 10px;
+  background: var(--blanco);
+  color: var(--noche);
+  font: 600 13px/1 var(--f-text);
+}
+
+.acc-fila button.peligro {
+  border-color: var(--ko-suave);
+  color: var(--ko);
+}
+
+.acc-fila button:disabled {
+  opacity: 0.5;
+}
+
+/* Las tablas y las tarjetas: una u otra según el ancho */
+.tarjetas-bo {
+  display: none;
+}
+
+.tarjetas-bo .card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.tarjetas-bo .acc-fila {
+  justify-content: flex-start;
+}
+
+@media (max-width: 760px) {
+  .tabla-wrap {
+    display: none;
+  }
+
+  .tarjetas-bo {
+    display: grid;
+    gap: 10px;
+    padding: 10px;
+  }
+}
+
+/* Las pestañas de una pantalla (Dates y Planes, Alertas y Partes) */
+.pestanas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pestanas button {
+  height: 36px;
+  padding: 0 14px;
+  border: 1.5px solid var(--borde-campo);
+  border-radius: var(--r-pastilla);
+  background: var(--blanco);
+  color: var(--noche);
+  font: 600 13.5px/1 var(--f-text);
+}
+
+.pestanas button[aria-pressed='true'] {
+  border-color: var(--azul);
+  background: var(--azul);
+  color: var(--blanco);
+}
+
+/* Un campo de marcar suelto en un formulario (cuenta activa) */
+.marcar-linea {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.marcar-linea input {
+  margin: 0;
+  accent-color: var(--azul);
+}
+
+/* La zona de peligro del formulario: archivar, restaurar o eliminar */
+.peligro-z {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 14px 16px;
+  border: 1.5px dashed var(--ko-suave);
+  box-shadow: none;
+}
+
+.btn2.peligro {
+  border-color: var(--ko-suave);
+  color: var(--ko);
+}
+
+/* Una lista de datos (etiqueta y valor) en una ventana de detalle */
+.datos {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 14px;
+  margin: 0;
+  font-size: 14px;
+}
+
+.datos dt {
+  color: var(--gris);
+}
+
+.datos dd {
+  margin: 0;
+}
+
+/* El historial de un Date (o las tiradas de un Plan): una línea por entrada, con su chip */
+.historial {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historial li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.historial li .chip {
+  flex: none;
+}
+
+.historial li small {
+  display: block;
+  color: var(--gris);
+  font-size: 12px;
+}
+
+/* Las alertas de ayuda del admin: una tarjeta por alerta, la abierta resaltada en rojo */
+.alertas {
+  display: grid;
+  gap: 10px;
+}
+
+.alerta-c {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 6px 12px;
+  align-items: center;
+  padding: 14px;
+}
+
+.alerta-c.abierta {
+  box-shadow:
+    inset 4px 0 0 var(--ko),
+    var(--sombra-tarjeta);
+}
+
+.alerta-c b {
+  display: block;
+  font-size: 15px;
+}
+
+.alerta-c p {
+  overflow-wrap: anywhere;
+}
+
+.alerta-c .btn .ico {
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+}
+
+@media (max-width: 640px) {
+  .alerta-c {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .alerta-c > .fila,
+  .alerta-c > .chip {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}

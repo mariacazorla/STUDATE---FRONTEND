@@ -1,0 +1,28 @@
+interface MarcaProps {
+  // La línea pequeña de debajo: "CAMPUS EDITION" en la app del estudiante y "BACKOFFICE" en la del admin
+  subtitulo?: string;
+}
+
+// El logo de Studate con su nombre. Se repite en la portada del login y en los dos armazones.
+// Los colores del dibujo salen de las variables del tema, como todo lo demás.
+export function Marca({ subtitulo = 'CAMPUS EDITION' }: MarcaProps) {
+  return (
+    <span className="marca">
+      <svg viewBox="0 0 40 40" aria-hidden="true">
+        <rect width="40" height="40" rx="11" fill="var(--rosa-boton)" />
+        <path
+          d="M27.5 13.2c-1.6-2.3-4.4-3.4-7.4-3.4-4.4 0-7.6 2.4-7.6 5.8 0 3.7 3.3 4.9 7.2 5.8 3.2.8 4.6 1.4 4.6 2.9 0 1.6-1.8 2.6-4.3 2.6-2.6 0-4.8-1.2-6.1-3.2l-3.3 2.4c1.9 3 5.4 4.8 9.3 4.8 4.8 0 8.5-2.5 8.5-6.3 0-3.9-3.4-5.1-7.4-6-3-.7-4.4-1.2-4.4-2.6 0-1.3 1.5-2.2 3.6-2.2 2 0 3.6.8 4.6 2.1z"
+          fill="var(--blanco)"
+        />
+        <path
+          d="M20 24.5c-1.2-1-3-2.3-3-3.8 0-.9.7-1.6 1.6-1.6.6 0 1.1.3 1.4.8.3-.5.8-.8 1.4-.8.9 0 1.6.7 1.6 1.6 0 1.5-1.8 2.8-3 3.8z"
+          fill="var(--maiz)"
+        />
+      </svg>
+      <span>
+        <b>STUDATE</b>
+        <small>{subtitulo}</small>
+      </span>
+    </span>
+  );
+}

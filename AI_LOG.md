@@ -129,3 +129,178 @@ Herramienta: Claude Code (Anthropic). Modelo: Claude Opus 5.5.
 - **Prompt:** «Arregla lo del formato como un fix.»
 - **Incoherencias:** en el frontend había 22 ficheros que ya no cumplían Prettier antes del examen. Solo 3 (los de `dates-list`) se han tocado en el Mínimo 1.
 - **Solución:** `prettier --write` solo en `dates-list.ts`, `.html` y `.spec.ts`, en su propia rama de fix. Comprobamos que, quitando espacios, saltos de línea y comas finales, el contenido es idéntico (solo cambia el formato). Los tests, el lint y el build siguen igual. Los otros 19 ficheros no se tocan para no mezclar cambios ajenos al examen.
+
+# Sprint 2
+
+Modelo en el Sprint 2: Claude Fable 5.2.
+
+### 1. Estructura: fuera el Angular y esqueleto del monorepo (`feat/estructura`)
+
+- **Pregunta:** cómo pasar el repo del backoffice en Angular a un monorepo con la web en React, la app del móvil y lo compartido, sin perder el historial.
+- **Prompt:** «Según la planificación establecida previamente, vamos a proceder de esta forma. Empezamos por la estructura, que es la base de todo. Las tareas son las del bloque 1 del plan (de la 1 a la 15). [...] Después el frontend. Hay que quitar todo lo de Angular y hacer limpieza, pero se quedan los AI_LOG y el historial de git, porque tiene que haber continuidad. Luego el esqueleto del monorepo: la web, el móvil y lo compartido. La web y el móvil tienen que tener el mismo estilo visual, el del blog, así que el tema va en un solo sitio, y desde el principio quiero usar bien el CSS global, para ir logrando un estilo unificado y no crear cosas únicas por página. En lo compartido van los modelos, el cliente HTTP con JSON Web Token para absolutamente todo y los servicios de la API: es pasar lo que teníamos en Angular a React. La web se hace a partir del Seminario 8 de React y programando con su mismo estilo; al menos en estos primeros pasos, es básicamente adaptar el Seminario 8 a lo nuestro. Los roles son solo dos: administrador y estudiante. Las cosas se hacen por feats: una rama por grupo de tareas, como en el Mínimo 1, y un commit por tarea. Dime el plan de acción.» Después de ver el plan lo aprobamos tal cual («procede») y le pedimos que, si salía alguna incompatibilidad que no hubiéramos tenido en cuenta, la dejara bien resuelta pensando en el futuro.
+- **Incoherencias:**
+  - El Seminario 8 de React pide React `^19.2.8` y el de React Native fija React `19.2.3`, que es la versión exacta que necesita Expo SDK 57. En un monorepo las dependencias se instalan juntas, y dos copias de React dan errores al ejecutar.
+  - El plan ponía la app del móvil en esta rama, pero tiene que arrancar leyendo el tema de `packages/shared`, que se hace en la rama siguiente.
+  - El plan decía Node 22 en el `.nvmrc`; el backend ya usa Node 24 y Expo SDK 57 pide 22.13 como mínimo.
+- **Solución:**
+  - Tag `angular-sprint1` en el último commit con Angular y un commit que solo borra: código, configuración, GUIA y EJERCICIO. Se quedan el historial, los AI_LOG, el LOGS y el mockup.
+  - `package.json` raíz con npm workspaces (`apps/*` y `packages/*`) y los comandos comunes (`dev:web`, `dev:movil`, `lint`, `typecheck`, `test` y `build`); `.nvmrc` con Node 24; `.gitignore`, Prettier y oxlint con una sola configuración para todo; y `packages/shared` como paquete vacío.
+  - React se fija a `19.2.3` en la raíz con `overrides`, para que la web y el móvil usen la misma copia.
+  - Una regla del linter prohíbe `window`, `document` y `localStorage` dentro de `packages/shared`, porque ese código también se ejecuta en el móvil.
+  - La app del móvil pasa a su propia rama (`feat/movil-base`), después de `feat/shared`.
+
+### 2. Lo compartido: modelos, cliente HTTP con JWT, servicios y tema (`feat/shared`)
+
+- **Pregunta:** cómo pasar a React lo que teníamos en Angular (modelos, interceptor del JWT y servicios) de forma que lo usen igual la web y la app del móvil.
+- **Prompt:** el mismo del bloque de estructura (entrada anterior). De esta rama es la parte: «En lo compartido van los modelos, el cliente HTTP con JSON Web Token para absolutamente todo y los servicios de la API: es pasar lo que teníamos en Angular a React. [...] La web y el móvil tienen que tener el mismo estilo visual, el del blog, así que el tema va en un solo sitio.»
+- **Incoherencias:**
+  - El interceptor de Angular decidía si renovar el token comparando el mensaje del 401 con el texto "El token ha caducado". Al recargar la página (sin token en memoria) el mensaje es otro y se cerraba la sesión.
+  - El refresh token se guarda distinto en cada plataforma (cookie HttpOnly en la web, almacén cifrado en el móvil), pero `packages/shared` no puede importar nada del navegador ni de Expo.
+  - Cada listado de la API llama a su lista con un nombre distinto (`users`, `dates`, `plans`...), y así un hook de listas no sirve para todos.
+  - Sin conexión, el refresh falla igual que con una sesión caducada: tratarlos igual cerraría la sesión por un corte de red.
+- **Solución:**
+  - Modelos en TypeScript de los ocho modelos del backend y `Paginated<T>`. El estudiante es un `User` con rol `user`.
+  - `http.ts` con la forma del `request()` del Seminario 8 y lo que hacía el interceptor: el access token solo en memoria, `Authorization` en todo salvo registro, login, refresh y logout, y ante cualquier 401 una sola renovación en curso (compartida por las peticiones que fallen a la vez) y un reintento. Si no se puede renovar, se avisa de que la sesión se ha perdido. Un fallo de red devuelve un error con `status 0` y no cierra la sesión.
+  - Lo que cambia entre plataformas va en un adaptador que cada app pasa con `configureHttp()`: la web pone `credentials: 'include'`; el móvil, la cabecera `X-Client: movil` y un almacén para el refresh token.
+  - Servicios de `auth`, `users`, `grades`, `dates` y `plans`, que devuelven los listados como `Paginated<T>`. La sesión (el usuario) vive en un store de Nanostores, `$user`.
+  - `tokens.ts` con los colores, tipografías, radios, sombras y espacios del blog.
+  - Tests con Vitest: 15 del cliente HTTP (token en cada petición, renovar y reintentar, una sola renovación, sesión perdida, web y móvil) y 7 del servicio de autenticación.
+
+### 3. La app del móvil, vacía y con el tema común (`feat/movil-base`)
+
+- **Pregunta:** cómo meter el proyecto de Expo del Seminario 8 de React Native en el monorepo y que arranque con el mismo tema que la web.
+- **Prompt:** el mismo del bloque de estructura (entrada 1). De esta rama es la parte: «Luego el esqueleto del monorepo: la web, el móvil y lo compartido. La web y el móvil tienen que tener el mismo estilo visual, el del blog, así que el tema va en un solo sitio.»
+- **Incoherencias:**
+  - El plan preveía un `metro.config.js` preparado para el monorepo. La documentación de Expo dice que desde el SDK 52 Metro se configura solo en un monorepo, y que una configuración manual antigua hay que quitarla.
+  - `npm install` fallaba: una dependencia indirecta de Expo Router (`@expo-google-fonts/material-symbols`) tiene publicada la versión 0.4.55 sin su fichero, y npm respondía 404.
+  - El proyecto del seminario trae pantallas de autores, libros, permisos y teoría, y dependencias que solo usan esas pantallas.
+- **Solución:**
+  - `apps/movil` con lo mínimo del proyecto del seminario: `app.json`, Expo Router y una pantalla de inicio. Sin `metro.config.js`.
+  - Esa dependencia se fija en los `overrides` de la raíz a la 0.4.49, que es la que usa el proyecto del seminario.
+  - La pantalla de inicio pinta la marca y los colores con `tokens` de `@studate/shared`: ni un color escrito a mano. La URL de la API se lee de `EXPO_PUBLIC_API_URL`.
+  - Comprobado sin teléfono: `expo export` empaqueta la app para web y para Android dentro del monorepo, `expo install --check` da las versiones por buenas y solo hay una copia de React (19.2.3) y de React Native. Queda por verla en un teléfono con Expo Go.
+
+### 4. La web: base, CSS global, armazón, login y rutas por rol (`feat/web-base`)
+
+- **Pregunta:** cómo montar la web a partir del Seminario 8 de React, con un CSS global que salga del tema, y dejarla entrando con JWT según el rol.
+- **Prompt:** el mismo del bloque de estructura (entrada 1). De esta rama es la parte: «Desde el principio quiero usar bien el CSS global, para ir logrando un estilo unificado y no crear cosas únicas por página. [...] La web se hace a partir del Seminario 8 de React y programando con su mismo estilo; al menos en estos primeros pasos, es básicamente adaptar el Seminario 8 a lo nuestro. Los roles son solo dos: administrador y estudiante.»
+- **Incoherencias:**
+  - El diseño acordado usa "container queries" para pasar de móvil a escritorio, porque dentro del documento cada pantalla va en un marco. En la web real el marco es la ventana.
+  - El hook `useListControls` del seminario busca y pagina en el navegador, y nuestro requisito es paginar en el servidor.
+  - El registro del diseño pide fecha de nacimiento y titulación y comprueba el dominio de la universidad, pero la API solo acepta nombre, correo y contraseña.
+  - Las clases de los componentes del seminario (`.modal`, `.toast`, `.pagination`) venían de su hoja de estilos, que tiene sus propios colores.
+  - En las pruebas en el navegador: una rejilla dejaba que la página se desbordara a lo ancho en el móvil, y una regla del menú lateral cortaba las iniciales del usuario.
+- **Solución:**
+  - `apps/web` con la estructura del seminario (components, context, hooks, utils y config), sin autores, libros ni favoritos y sin `useListControls`. La URL de la API se lee de `VITE_API_URL`.
+  - `aplicarTema()` vuelca los tokens como variables CSS antes del primer render. Todo el estilo vive en `global.css` y `componentes.css`, con `@media (min-width: 900px)` y sin un color escrito a mano. Los componentes del seminario se han pasado a esas clases y `/estilos` las enseña todas.
+  - Un solo componente `Armazon` para el estudiante y el admin: menú lateral en escritorio y, en estrecho, pestañas abajo o fila de secciones. `NavLink` marca la página activa con `aria-current`.
+  - Login y registro con `useForm` y `Field`. El registro pide solo lo que acepta la API; el resto del perfil irá en Mi perfil.
+  - `main.tsx` espera a `restoreSession()` antes de pintar. `SoloConSesion`, `SoloRol` y `SoloSinSesion` hacen de guards y leen el usuario del store, así que reaccionan solas al cerrar o perder la sesión.
+  - Las rejillas usan `minmax(0, 1fr)` y la regla del menú lateral se limita al nombre y al correo.
+  - 18 tests en la web (12 de las rutas según el rol) y la comprobación en el navegador contra la API local, a 1366 px y a 390 px.
+
+### 5. Primer despliegue en Docker: la imagen de la web (`feat/docker`)
+
+- **Pregunta:** cómo servir la web compilada con nginx dentro de Docker, con las rutas de la SPA y el proxy a la API, a partir del Seminario 10.
+- **Prompt:** «Según la planificación establecida previamente, vamos a proceder de esta forma. Con la estructura hecha y el login funcionando, toca el primer despliegue en Docker (bloque 2 del plan, de la 16 a la 19). Lo hacemos ya, con poco dentro, para ver si hay problemas con el servidor y no dejarlo para el final. Se hace como en el Seminario 10: te paso los repos del seminario y los datos del servidor. La conexión tiene que ir por HTTPS. [...] Hace falta el Dockerfile de la API, el de la web servida con nginx y el docker compose con MongoDB, la API y la web en el repo de despliegue. Primero que funcione en local y después en el servidor, y al final probar desde fuera que se puede iniciar sesión. Dime el plan de acción.» Después del análisis del Seminario 10: «Continúa con la parte local» mientras se consiguen los datos del servidor.
+- **Incoherencias:**
+  - El frontend del Seminario 10 usa nginx con la configuración por defecto, y su propio README avisa de que recargar una ruta interna da 404.
+  - En el seminario la URL de la API va compilada dentro de la imagen (`http://localhost:1337`): cambiar de servidor obliga a tocar el código y reconstruir.
+  - La web importa `packages/shared`, así que su `Dockerfile` no puede construirse desde `apps/web`: necesita la raíz del monorepo, y sin instalar Expo.
+- **Solución:**
+  - `apps/web/Dockerfile` en dos etapas desde la raíz: `npm ci --workspace` instala solo la web y shared, Vite compila con `VITE_API_URL=/api` y `nginx:1.29-alpine` sirve `dist/`.
+  - `apps/web/nginx.conf`: `try_files` devuelve `index.html` en las rutas de React Router, `/api/` se reenvía a `api:1337` (quitando el prefijo) y `/socket.io/` con las cabeceras de WebSocket; los ficheros con hash llevan caché larga. Al salir todo por el mismo origen no hay CORS y la cookie del refresh vive en `/api/auth`.
+  - `.dockerignore` deja fuera `node_modules`, `apps/movil`, los tests y cualquier `.env`. Un workflow de GitHub Actions pasa lint, tipos, tests y build y publica la imagen en ghcr.io.
+  - Probada con el compose en local: recargar en `/dates` y en `/admin/usuarios` da 200, el login de una estudiante por `/api` entra en La Orla y la sesión se mantiene al recargar.
+  - Después, para el HTTPS (`feat/https`): las reglas de nginx pasan a `apps/web/nginx/studate-app.conf`, que el server de http de la imagen (`default.conf`) incluye con `include`, y que el repo de despliegue reutiliza en su server de https. La imagen no cambia con o sin HTTPS.
+
+### 6. La Orla en la web (`feat/orla-web`)
+
+- **Pregunta:** cómo montar la pantalla de La Orla en la web con el estilo del blog, el gesto de deslizar bien depurado y la pantalla de ¡Date!
+- **Prompt:** «Según la planificación establecida previamente, vamos a proceder de esta forma. Ahora la pantalla principal de Studate, La Orla (bloque 3 del plan, de la 20 a la 25). [...] Después la parte visual, con el estilo del blog y el CSS global, y que funcione bien. Hay que debuguear bien el gesto de pasarlo a la derecha y a la izquierda: a la derecha es A+ y a la izquierda F, con el ratón y con el dedo. Dime el plan de acción.»
+- **Incoherencias:**
+  - La plantilla enseña "gustos" (etiquetas de aficiones) que el modelo no tiene. Se adaptó a los datos reales: nombre con la edad (calculada de birthDate), titulación, "qué busca" y bio.
+  - El aviso de deshacer llamaba a un setState del padre dentro del actualizador de estado del contador, y React avisaba de "setState mientras se pinta otro componente". Se arregló calculando el tiempo restante de una hora de fin y avisando al padre fuera del actualizador.
+- **Solución:**
+  - `orlaService` y sus modelos en `packages/shared`. La pantalla `Orla.tsx` con los estados (cargando, normal, vacío, error), los botones, el cupo y las flechas del teclado.
+  - El gesto en `ExpedienteCard` con Pointer Events (ratón y dedo) y un helper `voteFromDrag` con el umbral, con su test. Los botones y las flechas reutilizan la misma animación de "salir volando". Respeta `prefers-reduced-motion`.
+  - El aviso de deshacer con cuenta atrás (`UndoToast`) y la pantalla ¡Tenéis Date! (`MatchScreen`). Todo el CSS con las variables del tema, copiando la plantilla.
+  - Probado en el navegador contra la API local (votar, ¡Date!, deshacer, cupo, teclado) a 1366 px y a 390 px; el arrastre físico queda por mirar a mano.
+
+### 7. Mi perfil en la web (`feat/perfil-web`)
+
+- **Pregunta:** cómo hacer la pantalla de Mi perfil (Expediente, foto y contactos de confianza opcionales) con el CSS global.
+- **Prompt:** «Según la planificación establecida previamente, vamos a proceder de esta forma. Ahora Mi perfil (bloque 4 del plan, de la 26 a la 28). Es lo mismo que en cualquier web que tiene un "mi perfil": tu zona de ajustes, pero personales. El estudiante edita su Expediente y su foto, pero no puede cambiarse el rol. [...] Aquí van también los contactos de confianza, y tienen que ser opcionales: no hay que obligar a nadie a ponerlos. Mismo estilo visual y mismo CSS global que el resto. Primero el backend y después la web. Dime el plan de acción.»
+- **Incoherencias:**
+  - Una foto de móvil pesa varios MB y la API admite 200 KB en base64: hay que reducirla en el navegador antes de enviarla.
+  - Joi no acepta cadenas vacías en la fecha, la titulación ni "qué busco", pero el formulario las tiene vacías cuando no hay dato: solo se envían si tienen valor (la bio sí puede ir vacía).
+  - Las pantallas no deben cambiar la sesión, pero al guardar el perfil el menú tiene que enseñar el nombre y la foto nuevos.
+- **Solución:**
+  - `imageToDataUrl` reduce la foto con un `<canvas>`; `useForm` para los campos de texto y un estado aparte para la foto y la lista de contactos (hasta 3, editados en sitio).
+  - `refreshMe` en el store de la sesión, documentado como la única excepción: refresca la copia del propio usuario.
+  - Probado en el navegador: guardar y recargar conserva los cambios; a 1366 px y a 390 px.
+
+### 8. Mis Dates y el chat en la web (`feat/chat-web`)
+
+- **Pregunta:** cómo hacer Mis Dates (las bandejas con su reloj) y el chat de cada Date en tiempo real con socket.io, con el JWT en el socket y el CSS global.
+- **Prompt:** «Según la planificación establecida previamente, vamos a proceder de esta forma. Toca montar lo de las citas: Mis Dates y el chat (bloque 5 del plan, de la 29 a la 33). Aquí es donde volvemos a usar socket.io, y como es un chat, tiene que ser en tiempo real. Usa bien JSON Web Token también en el socket: sin token no se conecta nadie. [...] Primero el backend y después la web, con el estilo y el CSS global de siempre. Dime el plan de acción.» Diego pidió que se hicieran todos los bloques seguidos sin parar en cada uno, preguntando solo si surgía algo.
+- **Incoherencias:**
+  - La plantilla enseña en cada tarjeta el último mensaje, pero `GET /dates` no lo trae: se enseña en su lugar a quién le toca (pendientes) o cuándo empezó (en curso), que es lo que necesita el estudiante para decidir dónde entrar.
+  - La plantilla tiene la lista, el chat en curso y el chat "no es tu turno" como tres pantallas; en la web son una sola con dos columnas en escritorio y una en el móvil, y el turno es un estado de la misma conversación.
+  - El socket no cuelga de `/api`: en el servidor la web tiene `VITE_API_URL=/api` y socket.io tiene que ir contra el origen de la página (nginx ya reenvía `/socket.io`). Y el token del handshake tiene que ser el actual en cada reconexión, no el de cuando se abrió.
+  - Los botones de ayuda y de más opciones de la cabecera del chat son del bloque de seguridad: aquí solo queda el hueco.
+- **Solución:**
+  - `chat.service.ts` en `packages/shared` con `connectChat()` (origen deducido de la URL de la API, token con función en `auth`, renovación y reconexión con "El token ha caducado") y el contrato de eventos en `chat.model.ts`. `dateService.getMyDates` y `getMessages` (página 1, los más nuevos).
+  - `MisDates.tsx` con las dos columnas y un solo socket por pantalla (`useChat`); `ListaDates` con bandejas, aviso y reloj (`useNow`); `Charla` con el historial, la sala, el turno, la prórroga, los ✓✓ y los separadores de día. CSS nuevo en `componentes.css` con las variables del tema.
+  - Probado en el navegador contra la API local con Júlia respondiendo desde otro socket; a 1366 px y a 390 px.
+
+### 9. Seguridad en la web (`feat/seguridad-web`)
+
+- **Pregunta:** cómo poner bloquear, mandar un parte y el botón de ayuda en la web, a un toque desde el Expediente y desde el chat, con el CSS global.
+- **Prompt:** «Según la planificación establecida previamente, vamos a proceder de esta forma. Ahora las funcionalidades de conciencia digital, la seguridad (bloque 6 del plan, de la 34 a la 38). Bloquear: si alguien te da mala espina, lo bloqueas y ya no vuelve a aparecer, ni en La Orla ni en los chats. Reportar: de momento el parte va al administrador [...]. Y el botón de ayuda con los contactos de confianza, que son opcionales: no se obliga a nadie a tenerlos, y si no hay, el aviso llega igualmente a los administradores. Primero el backend y después la web. Dime el plan de acción.»
+- **Incoherencias:**
+  - La plantilla tiene las tres ventanas como pantallas aparte sobre el chat; aquí son ventanas que se abren desde el chat y también desde el Expediente de La Orla, donde la plantilla no tenía ningún botón de más opciones.
+  - La tarjeta del Expediente tiene un `transform` para el gesto de deslizar, así que una ventana con `position: fixed` dentro de ella se pintaba mal, y además la tarjeta capturaba el puntero y se quedaba con los clics de la ventana. Primer intento: el menú se abría pero no respondía a los clics.
+  - La ventana de ayuda tiene que decir a cuántos contactos se avisa, pero el usuario de la sesión no trae los contactos (son privados y solo vienen en `GET /users/me`).
+- **Solución:**
+  - `Ventana` con un portal en el `body` y `stopPropagation` del `pointerdown`; `AccionesSeguridad` (menú, parte y bloqueo) reutilizado en el Expediente (prop `acciones` de `ExpedienteCard`) y en la cabecera del chat; `BotonAyuda` + `AyudaModal`, que pide `GET /users/me` al abrirse.
+  - Servicios y eventos nuevos en `packages/shared`. Tras bloquear, La Orla carga el siguiente Expediente y el chat vuelve a Mis Dates con el Date cerrado fuera de las bandejas.
+  - Probado en el navegador contra la API local (parte, bloqueo desde los dos sitios, ayuda con el aviso simulado en el log), a 1366 px y a 390 px.
+
+### 10. El backoffice en React (`feat/backoffice`)
+
+- **Pregunta:** cómo rehacer en React el backoffice del Angular del Sprint 1 (usuarios, La Orla, Dates y Planes) y añadir la seguridad (alertas y partes), con la paginación en el servidor y solo para el admin.
+- **Prompt:** «Según la planificación establecida previamente, vamos a proceder de esta forma. Ahora el backoffice (bloque 7 del plan, de la 39 a la 43). Es lo más simple que hay: lo que teníamos en Angular, rehecho en React con el estilo visual que ya hemos acordado, adaptado al backoffice, y con el mismo CSS global que la app del estudiante. Usuarios, La Orla, Dates y Planes, y la parte de seguridad: las alertas de ayuda y los partes. Recuerda los requisitos de siempre: la paginación de 10 en 10 se hace en el servidor, para que el proyecto sea eficiente, y solo entra el administrador. Dime el plan de acción.»
+- **Incoherencias:**
+  - La plantilla filtra los votos "por persona" con una búsqueda de texto, pero la API solo filtra por el id del usuario: se usa un desplegable con los estudiantes del directorio.
+  - La tabla de Dates de la plantilla tiene una columna "Plan", que obligaría a una petición por fila: se quita y los Planes tienen su propia pestaña con la pareja de cada uno.
+  - Las alertas solo traen el id del Date: para decir "Date con Pau" hay que pedir cada Date aparte (son pocas por página).
+  - El Angular del Sprint 1 tenía el formulario de crear y editar Planes; aquí los Planes se ven, se archivan, se restauran y se eliminan, pero no se crean a mano: el Cambio de Aula del estudiante no está en el plan de este sprint y crear Planes desde el backoffice no aporta.
+- **Solución:**
+  - `usePagedList` y las piezas de `components/admin/` para que las cinco pantallas paginen y pinten igual, con la tabla en escritorio y tarjetas en el móvil.
+  - `UsuariosAdmin` y `UsuarioForm` (con `useForm` y la foto reducida como en Mi perfil), `OrlaAdmin`, `DatesAdmin` (pestañas, detalle con el historial, cerrar con motivo) y `SeguridadAdmin` (socket con `alert:new` y `alert:updated`, atender, revisar partes).
+  - Probado en el navegador como admin, con una alerta lanzada desde la API para ver que llega sin recargar; a 1366 px y a 390 px.
+
+### 11. La app del móvil (`feat/movil`)
+
+- **Pregunta:** cómo hacer la app del estudiante en el móvil con Expo, con el mismo aspecto que la web y reutilizando lo compartido del monorepo, con el refresh token guardado de forma segura.
+- **Prompt:** «Según la planificación establecida previamente, vamos a proceder de esta forma. Ahora la app del móvil (bloque 8 del plan, de la 44 a la 48): lo mismo que la web, pero para el móvil y con el mismo estilo visual, sacado del tema compartido. No es lo más importante, pero hay que hacerlo. De momento sin funciones nativas. Se hace a partir del Seminario 8 de React Native y con lo compartido del monorepo: los modelos, el cliente HTTP con JSON Web Token y los servicios. En el móvil el refresh va en el body y se guarda de forma segura. Al final tiene que funcionar contra el servidor, por HTTPS. Dime el plan de acción.»
+- **Incoherencias:**
+  - "Sin funciones nativas" deja fuera la galería del teléfono: la foto de perfil se ve en el móvil pero se cambia desde la web.
+  - El gesto de deslizar de la web usa Pointer Events del navegador, que no existen en React Native: se rehace con `PanResponder` y `Animated` (sin añadir librerías nativas), con el mismo umbral.
+  - Los textos de tiempo ("quedan 23 h", "hoy a las 16:43") estaban en la web y el móvil los necesita igual: se mueven al paquete compartido con sus tests.
+  - No se puede probar en un teléfono desde aquí: la app se ha probado en el navegador con `expo start --web` (react-native-web), que cubre las pantallas, la sesión, el socket y las hojas; el gesto físico y el almacén cifrado quedan por mirar con Expo Go.
+- **Solución:**
+  - `configureHttp` con `X-Client: movil` y `expo-secure-store` como almacén del refresh token; el layout raíz recupera la sesión y protege las rutas; pestañas con Expo Router.
+  - Las cuatro pantallas con los servicios compartidos y los tokens en `StyleSheet`; el socket con el mismo `connectChat()` de la web; las ventanas de seguridad como hojas (`Modal`).
+  - `.env.example` y `README.md` de la app con la URL del servidor por HTTPS y la guía de Expo Go.
+
+### 12. Cierre y documentación (`feat/documentacion`)
+
+- **Pregunta:** cómo dejar el repo listo para la entrega: GitHub Actions con lint, tipos, tests y build, y los LOGS y README al día.
+- **Prompt:** «Según la planificación establecida previamente, vamos a proceder de esta forma. Ya toca el segundo despliegue y el cierre (bloque 9 del plan, de la 49 a la 54). [...] También hay que hacer lo de GitHub Actions, con el lint, el build y los tests en cada push, en el backend y en el frontend. Y dejar todo al día: LOGS y README, el diagrama de clases, el flujo de arquitectura, y el GitHub Project y las horas. Dime el plan de acción.»
+- **Incoherencias:**
+  - El workflow ya existía desde el bloque de Docker con lint, tipos, tests y build: no había que crear nada, solo comprobarlo y documentarlo.
+  - La app del móvil no tiene imagen de Docker ni se despliega: en CI solo se comprueban sus tipos.
+- **Solución:**
+  - Se revisa el workflow y se apunta qué pasa. README de la raíz y de `apps/movil` repasados; el contrato y las tareas de este LOGS, completos.

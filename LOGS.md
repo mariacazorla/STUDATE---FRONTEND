@@ -13,24 +13,31 @@ Las tareas del backend, las de estructura y las de Scrum están en el LOGS.md de
 
 Lo que backend y frontend tienen que cumplir igual. Si algo de aquí cambia, se cambia en los dos LOGS.md.
 
-- **Rutas públicas**: `POST /auth/register` y `POST /auth/login`. `POST /auth/refresh` y `POST /auth/logout` se autentican con la cookie del refresh token. `GET /ping` y la documentación
+- **Rutas públicas**: `POST /auth/register` y `POST /auth/login`. `POST /auth/refresh` y `POST /auth/logout` se autentican con el refresh token (en la cookie o, la app del móvil, en el body). `GET /ping` y la documentación
   (`/api-docs`) también son públicas. Todo lo demás exige token.
 - **Registro**: el cuerpo es `{ name, email, password }` (contraseña de 8 caracteres como mínimo; `role` no se acepta, todo usuario nuevo es `user`). Responde 201 con `{ user }` y **sin token**, 409
   si el email ya existe o 422 si el cuerpo no es válido. El frontend redirige entonces a la página de login.
 - **Login**: el cuerpo es `{ email, password }`. Responde `{ token, user }` o 401. `user` es `{ _id, name, email, role, createdAt, updatedAt }`, sin contraseña. El refresh token **no va en el
-  JSON**: se deja en la cookie `refreshToken` (HttpOnly, SameSite=Strict, Path=/auth, Max-Age de 7 días; Secure en producción).
-- **Refresh**: sin cuerpo. Lee el refresh token de la cookie y responde `{ token }` (un access token nuevo), o 401 si no hay cookie, ha caducado o no es válida. El refresh token no cambia.
-- **Logout**: sin cuerpo. Borra la cookie y responde 204. Después, `/auth/refresh` responde 401.
-- **Cookies y CORS**: el frontend llama a `/auth/*` con `withCredentials: true`; el backend responde con `Access-Control-Allow-Credentials: true` y el origen exacto de `CORS_ORIGIN` (no vale `*`).
+  JSON**: se deja en la cookie `refreshToken` (HttpOnly, SameSite=Strict, Path=/auth, Max-Age de 7 días; Secure en producción). La ruta y el Secure de la cookie se
+  cambian con `REFRESH_COOKIE_PATH` (detrás de nginx, `/api/auth`) y `COOKIE_SECURE`.
+- **Login desde la app del móvil**: la misma ruta con la cabecera `X-Client: movil`. Responde `{ token, refreshToken, user }` y **no pone cookie**: la app guarda el refresh
+  token en el almacén cifrado del teléfono.
+- **Refresh**: la web no manda cuerpo y se lee el refresh token de la cookie; la app del móvil manda `{ refreshToken }` en el cuerpo. Si llegan los dos, se usa el del
+  cuerpo. Responde `{ token }` (un access token nuevo), o 401 si no hay refresh token, ha caducado o no es válido; 422 si `refreshToken` no es un texto. El refresh token no cambia.
+- **Logout**: sin cuerpo. Borra la cookie y responde 204. Después, `/auth/refresh` responde 401. La app del móvil cierra sesión borrando su refresh token.
+- **Cookies y CORS**: la web llama a la API con `credentials: 'include'`; el backend responde con `Access-Control-Allow-Credentials: true` y el origen de la petición si está
+  en la lista de `CORS_ORIGINS` (por defecto `http://localhost:5173` y `http://localhost:8081`; no vale `*`). Las peticiones sin `Origin` (la app del móvil) no pasan por CORS.
+- **Paginación**: todos los listados aceptan `page` y `limit` (de 1 a 100) y, si no se dice `limit`, devuelven **10** elementos por página.
 - **Token**: se envía en la cabecera `Authorization: Bearer <token>`. Su payload lleva los claims `sub` (id del usuario), `role` y `exp`. El access token dura 15 minutos y el refresh token 7 días.
-  El frontend guarda el access token solo en memoria (una signal), nunca en `localStorage` ni `sessionStorage`; al recargar la página lo recupera llamando a `/auth/refresh` y después a `/users/me`.
+  El frontend guarda el access token solo en memoria, nunca en `localStorage` ni `sessionStorage`; al recargar la página lo recupera llamando a `/auth/refresh` y después a `/users/me`.
 - **Errores de autenticación**: 401 si falta el token, ha caducado (`{ message: 'El token ha caducado' }`) o no es válido (`{ message: 'Token no válido' }`); 403 si hay sesión pero no el rol
   necesario.
 - **Usuario con sesión**: `GET /users/me` (con sesión, cualquier rol) responde `{ user: { _id, name, email, role } }`, a partir del token (`req.user`).
 - **Con quién abrir un Date**: `GET /users/directory` (con sesión, cualquier rol) responde `{ users: [{ _id, name, degree?, photo? }] }`: los demás usuarios
   de rol `user` activos, ordenados por nombre.
 - **Usuario**: `{ _id, name, email, role, birthDate?, degree?, lookingFor?, bio?, photo?, active, deleted, deletedAt?, createdAt, updatedAt }`, nunca con
-  contraseña. `photo` es una imagen PNG o JPG en base64 (`data:image/...;base64,...`, 200 000 caracteres como mucho).
+  contraseña. `photo` es una imagen PNG o JPG en base64 (`data:image/...;base64,...`, 200 000 caracteres como mucho). Los contactos de confianza
+  (`trustedContacts`: hasta 3, cada uno `{ name, email, phone? }`) son privados y **no van** en el usuario: ninguna respuesta de hoy los incluye.
 - **Usuarios inactivos y archivados**: no pueden iniciar sesión ni renovar el token (401 con el mensaje de siempre). Lo hace el prehook del modelo.
   Si ya tenían sesión, cualquier petición con su token responde 401 `{ message: 'Tu cuenta no está activa' }` y el frontend cierra la sesión.
 - **Gestión de usuarios** (solo `admin`):
@@ -46,7 +53,7 @@ Lo que backend y frontend tienen que cumplir igual. Si algo de aquí cambia, se 
   - `POST /users/:userId/restore` responde 200 `{ user }`; 404 si no existe o no estaba archivado.
   - `DELETE /users/:userId` (borrado físico) responde 204. Solo con usuarios archivados: si no, 409 `{ message: 'Archiva el usuario antes de eliminarlo' }`.
   - Un admin no puede cambiarse su propio rol, desactivarse, archivarse ni eliminarse: 403 `{ message: 'No puedes hacer esto con tu propio usuario' }`.
-  - Al eliminar un usuario para siempre se borran también sus votos de La Orla y sus Dates.
+  - Al eliminar un usuario para siempre se borran también sus votos de La Orla, sus Dates (con el Plan y los mensajes de cada uno), sus bloqueos, sus partes y sus alertas.
 - **Voto de La Orla (Grade)**: `{ _id, from, to, value, createdAt, updatedAt }`. `from` (quien vota) y `to` (a quien) llegan como
   `{ _id, name, email, photo? }`, también si el usuario está inactivo. `value` es `'A+'` o `'F'`. Un solo voto por pareja (from, to).
 - **Votos de La Orla** (solo `admin`):
@@ -57,18 +64,72 @@ Lo que backend y frontend tienen que cumplir igual. Si algo de aquí cambia, se 
     (`{ message: 'Un usuario no se puede votar a sí mismo' }`) o el cuerpo no vale; 404 si `from` o `to` no existen.
   - `PUT /grades/:gradeId` con `{ value }` responde 200 `{ grade }`. `DELETE /grades/:gradeId` responde 204 (borrado físico).
   - Si al crear un A+ o al cambiar un voto a A+ ya existe el A+ contrario, se abre un Date entre los dos (si no lo había ya).
-- **Date**: `{ _id, users, status, firstTurn, expiresAt, extended, createdAt, updatedAt }`. `users` son los dos usuarios como `{ _id, name, email,
-  photo? }`; `status` es `'pending'` (Pendiente), `'ongoing'` (En curso) o `'closed'` (Cerrado); `firstTurn` es el id del usuario al que le toca
-  escribir primero (sorteado); `expiresAt` es 24 horas después de abrirse; `extended` dice si ya se usó la prórroga. Un solo Date por pareja.
+- **Date**: `{ _id, users, status, firstTurn, expiresAt, extended, startedAt?, closedAt?, closedReason?, history, createdAt, updatedAt }`. `users` son los dos
+  usuarios como `{ _id, name, email, photo? }`; `status` es `'pending'` (Pendiente), `'ongoing'` (En curso) o `'closed'` (Cerrado); `firstTurn` es el id del usuario al que
+  le toca escribir primero (sorteado); `expiresAt` es 24 horas después de abrirse; `extended` dice si ya se usó la prórroga. Un solo Date por pareja.
+  `startedAt` es cuándo pasó a En curso; `closedAt` y `closedReason` (`'expired'`, `'blocked'` o `'admin'`), cuándo y por qué se cerró. `history` es la lista de cambios
+  de estado, `[{ status, by?, reason?, at }]`, del más antiguo al más nuevo; sin `by`, lo hizo el servidor. Todo Date nace con la entrada `pending`.
 - **Dates** (cualquier usuario con sesión; el admin ve todos y un usuario normal solo los suyos):
   - `GET /dates?page=&limit=&status=&user=` responde `{ dates, total, page, pages }`, primero los más nuevos. `user` solo lo usa el admin.
   - `GET /dates/:dateId` responde `{ date }`; 404 si no existe o es de otros.
-  - `POST /dates` con `{ users: [idA, idB] }` responde 201 `{ date }`; 403 si un usuario normal no es uno de los dos; 409 si ya hay un Date entre
-    ellos (`{ message: 'Ya hay un Date entre estos dos usuarios' }`); 404 si alguno no existe; 422 si no son dos ids distintos.
-  - `PUT /dates/:dateId` con `{ status }` responde 200 `{ date }`; 404 si no existe o es de otros.
-  - `POST /dates/:dateId/extend` suma 24 horas a `expiresAt` y pone `extended: true`; 409 si ya se usó
-    (`{ message: 'La prórroga de este Date ya se ha usado' }`).
-  - `DELETE /dates/:dateId` (solo admin) responde 204.
+  - `POST /dates` con `{ users: [idA, idB] }` es **solo del admin** (un estudiante recibe 403: sus Dates se abren con el A+ mutuo). Responde 201 `{ date }`
+    con `history: [{ status: 'pending', by: <admin>, reason: 'Abierto por un admin', at }]`; 409 si ya hay un Date entre ellos
+    (`{ message: 'Ya hay un Date entre estos dos usuarios' }`); 404 si alguno no existe; 422 si no son dos ids distintos.
+  - `PUT /dates/:dateId` con `{ status, reason? }` es **solo del admin** (403 si no). Responde 200 `{ date }` y añade al `history` `{ status, by: <admin>,
+    reason?, at }`; al cerrar, `closedAt` es ahora y `closedReason` es `'admin'`; al reabrir se quitan los dos; a `ongoing` rellena `startedAt` si no lo
+    tenía. Si el estado es el que ya tenía, no se apunta nada. 404 si no existe.
+  - `POST /dates/:dateId/extend` (los dos del Date) suma 24 horas a `expiresAt`, pone `extended: true` y añade al `history` `{ status: <el que tenía>, by,
+    reason: 'Prórroga de 24 horas', at }`; 409 si ya se usó (`{ message: 'La prórroga de este Date ya se ha usado' }`) o si el Date está cerrado
+    (`{ message: 'Este Date está cerrado' }`). La sala del chat recibe `date:updated`.
+  - `GET /dates/:dateId/messages?page=&limit=` (los dos del Date y el admin) responde `{ messages, total, page, pages }`: la página 1 son los mensajes
+    **más nuevos** y dentro de cada página van en orden cronológico. 404 si el Date es de otros.
+  - `DELETE /dates/:dateId` (solo admin) responde 204. Con el Date se borran su Plan y sus mensajes.
+  - **Estados automáticos**: el primer mensaje del chat pasa el Date a `ongoing` (`startedAt` = hora del mensaje, `history` con `by` quien lo
+    escribió y `reason: 'Primer mensaje'`). Un Date `pending` que llega a `expiresAt` lo cierra el servidor (comprobación cada minuto):
+    `closed`, `closedReason: 'expired'`, `history` sin `by` y `reason: 'Caducado sin mensajes'`. Un Date `ongoing` no caduca.
+- **Chat en tiempo real (socket.io)**: mismo origen y puerto que la API (en el servidor, nginx reenvía `/socket.io/`). El cliente conecta con
+  `io(url, { auth: { token } })`; sin token válido, `connect_error` con el mismo mensaje que daría el 401 de la API (`Falta el token`,
+  `El token ha caducado`, `Token no válido`, `Tu cuenta no está activa`). Con `El token ha caducado` el cliente renueva y reconecta; con los demás
+  cierra la sesión. El token solo se comprueba al conectar. Cada Date es una sala en la que solo entran sus dos usuarios:
+  - cliente → servidor: `date:join { dateId }`, `date:leave { dateId }`, `date:message { dateId, text }` (1 a 1000 caracteres; hay que haber hecho
+    `date:join` antes), `date:read { dateId }`.
+  - servidor → cliente: `date:joined { dateId }`; `date:message <Message>` a los dos de la sala (también a quien lo escribió, ya con `_id` y
+    `createdAt`); `date:updated <Date>` cuando el Date cambia (primer mensaje, caducidad, prórroga, cambio del admin); `date:read { dateId, by, at }`;
+    `chat:error { message }` (`No puedes entrar en este Date`, `Entra en el Date antes de escribir`, `Todavía no es tu turno: empieza la otra persona`,
+    `Este Date está cerrado: ya no se puede escribir`, o el mensaje de Joi del texto).
+  - Turno: en un Date `pending` solo escribe `firstTurn`; después del primer mensaje escriben los dos. En un Date `closed` se entra a leer, no a escribir.
+- **Message**: `{ _id, date, from, text, readAt?, createdAt }`. `text` de 1 a 1000 caracteres. Llega por el socket y por `GET /dates/:dateId/messages`.
+- **Bloqueos** (`/blocks`, solo rol `user`; el que bloquea sale del token. A la persona bloqueada no se le avisa y no hay ruta con la que pueda saberlo):
+  - **Block**: `{ _id, blocker, blocked, createdAt }`. Un solo bloqueo por pareja (blocker, blocked).
+  - `GET /blocks` responde `{ blocks }`, los míos, con `blocked` como `{ _id, name, degree?, photo? }`.
+  - `POST /blocks` con `{ blocked }` responde 201 `{ block, date }`: `date` es el Date que tenían los dos y se ha cerrado (`closedReason: 'blocked'`, `history`
+    con `by` quien bloqueó y `reason: 'Bloqueo'`; su sala recibe `date:updated`), o `null` si no había. 422 si es uno mismo, 404 si no existe o no es
+    estudiante, 409 si ya estaba bloqueado (`{ message: 'Ya tienes bloqueada a esta persona' }`).
+  - `DELETE /blocks/:userId` responde 204; 404 si no había bloqueo. El Date cerrado no se reabre.
+  - Con un bloqueo en cualquiera de los dos sentidos, ninguno le sale al otro en La Orla ni puede votarlo (403), y el chat del Date está cerrado.
+- **Partes** (`/reports`; mandarlo es del rol `user`, el resto solo `admin`: un estudiante que pida la lista o un parte recibe 403):
+  - **Report**: `{ _id, reporter, reported, date?, reason, text?, status, severity?, resolution?, reviewedBy?, reviewedAt?, createdAt, updatedAt }`. `reporter` y
+    `reported` llegan como `{ _id, name, email, photo? }`, también si están inactivos. `reason` es `'harassment'`, `'fake_profile'`, `'inappropriate'` u
+    `'other'`; `status`, `'open'`, `'reviewed'` o `'dismissed'`; `severity` (`'low'`, `'medium'` o `'high'`) y `resolution` las pone el admin.
+  - `POST /reports` con `{ reported, reason, date?, text? }` responde 201 `{ report }` abierto; 422 si es sobre uno mismo, si `reason` no vale o si `date` no es
+    un Date mío con esa persona (`{ message: 'Ese Date no es tuyo' }`); 404 si `reported` no existe.
+  - `GET /reports?page=&limit=&status=&severity=&reported=` responde `{ reports, total, page, pages }`, primero los más nuevos; 400 si un filtro no vale.
+  - `GET /reports/:reportId` responde `{ report }`; 404 si no existe.
+  - `PUT /reports/:reportId/review` con `{ status: 'reviewed' | 'dismissed', severity?, resolution? }` responde 200 `{ report }` con `reviewedBy` y
+    `reviewedAt`; `status: 'open'` da 422. Se puede volver a revisar (se sobreescriben gravedad, resolución, quién y cuándo).
+- **Botón de ayuda** (`/alerts`; pedir ayuda es del rol `user`, el resto solo `admin`):
+  - **SafetyAlert**: `{ _id, user, date?, plan?, type, message?, status, attendedBy?, attendedAt?, createdAt, updatedAt }`. `user` llega como
+    `{ _id, name, email, photo? }`. `type` es `'sos'`; `status`, `'open'`, `'attended'` o `'false_alarm'`.
+  - `POST /alerts` con `{ date?, plan?, message? }` (todo opcional) responde 201 `{ alert, contactsNotified }`: la alerta abierta y a cuántos contactos de
+    confianza se ha avisado (0 si no tiene: la alerta se crea igual y la ven los admin). 422 si `date` o `plan` no son míos. Los admin conectados reciben
+    la alerta al momento por el socket (`alert:new`); el aviso a los contactos es simulado (una línea en el log del servidor por contacto, como el email
+    de bienvenida).
+  - `GET /alerts?page=&limit=&status=` responde `{ alerts, total, page, pages }`, primero las más nuevas; 400 si el filtro no vale.
+  - `GET /alerts/:alertId` responde `{ alert }`; 404 si no existe.
+  - `PUT /alerts/:alertId/attend` con `{ status: 'attended' | 'false_alarm' }` responde 200 `{ alert }` con `attendedBy` y `attendedAt`; `'open'` da 422.
+    Los demás admin reciben `alert:updated`.
+  - **Socket de los admin**: al conectar, un socket con rol `admin` entra solo en la sala `admins` y recibe `alert:new <SafetyAlert>` y
+    `alert:updated <SafetyAlert>`. Un estudiante nunca los recibe.
 
 ## Tareas
 
@@ -95,6 +156,76 @@ Lo que backend y frontend tienen que cumplir igual. Si algo de aquí cambia, se 
 #### Dates (`dates`)
 
 - [x] Pantallas de Date · María
+
+### Sprint 2
+
+#### Estructura (`feat/estructura`)
+
+- [x] Quitar el Angular: código, configuración, GUIA y EJERCICIO · Miguel Ángel
+- [x] Esqueleto del monorepo: workspaces, .nvmrc, .gitignore, Prettier y oxlint comunes, README y CONTRIBUTING · Miguel Ángel
+
+#### Lo compartido (`feat/shared`)
+
+- [x] Modelos en TypeScript: User, Grade, StudateDate, Plan, Message, Block, Report y SafetyAlert · María
+- [x] Cliente HTTP con JWT: access token en memoria, refresh y reintento tras un 401 · Diego
+- [x] Servicios de la API (auth, users, grades, dates y plans) y los tokens del tema · Diego
+
+#### La app del móvil (`feat/movil-base`)
+
+- [x] apps/movil: el proyecto de Expo del Seminario 8 de React Native, vacío y arrancando con el tema común · María
+
+#### La web (`feat/web-base`)
+
+- [x] apps/web a partir del Seminario 8 de React, con la URL de la API en VITE_API_URL · Miguel Ángel
+- [x] CSS global: los tokens como variables, global.css y componentes.css · María
+- [x] Armazón del estudiante y del backoffice · Miguel Ángel
+- [x] Login y registro · Miguel Ángel
+- [x] Recuperar la sesión al arrancar y rutas según el rol · Miguel Ángel
+
+#### Primer despliegue en Docker (`feat/docker`)
+
+- [x] Dockerfile de la web: build de Vite servido con nginx, con las rutas de la SPA y el proxy de /api y /socket.io · Miguel Ángel
+
+#### La Orla (`feat/orla-web`)
+
+- [x] Pantalla La Orla: Expediente, botones F/deshacer/A+, cupo del día y flechas del teclado · María
+- [x] Gesto de deslizar: a la derecha A+ y a la izquierda F, con el ratón y con el dedo · María
+- [x] Aviso de deshacer y pantalla ¡Tenéis Date! · María
+
+#### Mi perfil (`feat/perfil-web`)
+
+- [x] Pantalla Mi perfil: foto, datos, contactos de confianza (opcionales) y cerrar sesión · Miguel Ángel
+
+#### Mis Dates y chat (`feat/chat-web`)
+
+- [x] Mis Dates: bandejas de Pendientes y En curso, con su reloj · Diego
+- [x] Chat en tiempo real con el historial, el turno y la prórroga · Diego
+
+#### Seguridad (`feat/seguridad-web`)
+
+- [x] Bloquear y reportar desde el Expediente y desde el chat · Miguel Ángel
+- [x] Botón de ayuda en el chat · Diego
+
+#### Backoffice en React (`feat/backoffice`)
+
+- [x] Usuarios: lista con búsqueda, filtros y paginación del servidor de 10 en 10 · Miguel Ángel
+- [x] Usuarios: crear y editar; archivar, restaurar y eliminar · Miguel Ángel
+- [x] La Orla del admin: votos con filtros · María
+- [x] Dates y Planes del admin, con el historial de cada Date · María
+- [x] Seguridad del admin: alertas de ayuda en tiempo real y partes con su gravedad · Diego
+
+#### La app en el móvil (`feat/movil`)
+
+- [x] Base de la app: tema común, pestañas y login con la sesión guardada de forma segura · Diego
+- [x] La Orla en el móvil, con el gesto de deslizar · María
+- [x] Mis Dates y chat en el móvil · Diego
+- [x] Mi perfil y seguridad en el móvil · María
+- [x] La app contra la API del servidor por HTTPS y demo con Expo Go (la configuración y la guía; la prueba con datos móviles, al desplegar) · Diego
+
+#### Segundo despliegue y cierre (`feat/documentacion`)
+
+- [x] GitHub Actions: lint, tipos, tests y build en cada push · Diego
+- [x] LOGS y README al día · Miguel Ángel
 
 ## Bitácora
 
@@ -284,3 +415,215 @@ La bitácora del Seminario 7, de donde viene este código, se conserva en el tag
 - Validación ejecutada: `npm run build`, `npm run lint` y `npm test -- --watch=false` en verde (16 ficheros, 60 tests); con la API, el formulario de
   nuevo voto con una pareja repetida enseña el mensaje nuevo.
 - Prompt de IA usado: el README va "al final de cada rama, como continuación"; esta es la del cierre del sprint.
+
+### 2026-11-25 · Sprint 2: la estructura (de Angular a un monorepo en React)
+
+- El backoffice en Angular del Sprint 1 se rehace en React y el repositorio pasa a ser un monorepo con tres carpetas: `apps/web` (React y
+  Vite), `apps/movil` (Expo) y `packages/shared` (lo que no se pinta). El Angular completo se conserva en el tag `angular-sprint1` y en `main`.
+- **`feat/estructura`**: un commit que solo borra el Angular (se quedan el historial, los AI_LOG, este LOGS y el mockup) y otro con el esqueleto:
+  `package.json` raíz con npm workspaces y los comandos comunes, `.nvmrc` con Node 24, y Prettier y oxlint con una sola configuración. React
+  queda fijado a 19.2.3 con `overrides`, porque es la versión exacta que necesita Expo SDK 57 y en un monorepo solo puede haber una copia.
+- **`feat/shared`**: los modelos en TypeScript de los ocho modelos del backend y `Paginated<T>`; el cliente HTTP con JWT (`request()`, con la
+  forma del Seminario 8 y lo que hacía el interceptor de Angular); los servicios de `auth`, `users`, `grades`, `dates` y `plans`; la sesión en
+  un store de Nanostores (`$user`); y `tokens.ts` con el tema. Lo que cambia entre la web y el móvil va en un adaptador que cada app pasa con
+  `configureHttp()`, así que este paquete no importa nada del navegador ni de Expo (lo comprueba una regla del linter).
+- Decisiones del cliente HTTP: ante cualquier 401 de una ruta protegida se renueva el token una vez y se repite la petición, sin depender del
+  texto del mensaje; si varias peticiones fallan a la vez, comparten una sola renovación; si no se puede renovar, se avisa y el store olvida al
+  usuario; y un fallo de red no cierra la sesión.
+- **`feat/movil-base`**: `apps/movil` con lo mínimo del proyecto de Expo del Seminario 8 de React Native, sin `metro.config.js` (desde el SDK 52
+  Expo configura Metro solo en un monorepo). Su pantalla de inicio pinta con `tokens`. Se hizo después de `feat/shared`, y no dentro de
+  `feat/estructura` como decía el plan, porque necesita el tema.
+- **`feat/web-base`**: `apps/web` con la estructura del Seminario 8 de React. El tema se vuelca como variables CSS antes del primer render y
+  todo el estilo está en `global.css` (base, tipografía, maquetación y armazón) y `componentes.css` (botón, tarjeta, chip, campo, aviso, tabla,
+  paginación, vacío, esqueleto, acceso y ventana de confirmación), sin un solo color escrito a mano. `/estilos` enseña todas las piezas.
+  El armazón es un solo componente para el estudiante y el admin; login y registro siguen el diseño acordado; y al arrancar se recupera la
+  sesión antes de pintar. Las rutas protegidas (`SoloConSesion`, `SoloRol` y `SoloSinSesion`) hacen el papel de los guards de Angular.
+- Dos cosas del diseño que no se han hecho porque la API no las tiene: en el registro, la fecha de nacimiento y la titulación (la API solo
+  acepta nombre, correo y contraseña; irán en Mi perfil) y la comprobación del dominio universitario.
+- Validación ejecutada: `npm run lint` sin errores, `npm run typecheck` y `npm run build` en verde, y `npm test` con 40 tests (15 del cliente
+  HTTP, 7 del servicio de autenticación, 12 de las rutas según el rol, 3 del tema y 3 de formato). En el navegador, con la API local y el seed:
+  una contraseña mala enseña el error debajo del campo; Laia (estudiante) entra en La Orla y el admin, en Usuarios; al recargar no se pierde la
+  sesión; el estudiante que abre `/admin` vuelve a `/orla` y el admin que abre `/orla` vuelve a `/admin`; y cerrar sesión lleva al login. Las
+  pantallas se han mirado a 1366 px y a 390 px de ancho, sin desbordes. La app del móvil empaqueta con `expo export` para web y para Android;
+  queda por verla en un teléfono con Expo Go.
+- Prompt de IA usado: el del bloque "Estructura" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).
+
+### 2026-11-25 · Sprint 2: la imagen de Docker de la web (`feat/docker`)
+
+- `apps/web/Dockerfile` en dos etapas, construido desde la raíz del monorepo (`docker build -f apps/web/Dockerfile .`): `node:24-alpine`
+  instala solo la web y `packages/shared` (`npm ci --workspace`, sin Expo) y compila con Vite con `VITE_API_URL=/api`; `nginx:1.29-alpine`
+  sirve `dist/` (93 MB en total).
+- `apps/web/nginx.conf` propio, en lugar de la configuración por defecto del Seminario 10: devuelve `index.html` en las rutas de React
+  Router, reenvía `/api/` a `api:1337` quitando el prefijo y `/socket.io/` con las cabeceras de WebSocket (para el chat del bloque 5), y
+  da caché larga a los ficheros con hash. Al salir la web y la API por el mismo origen no hay CORS, la URL de la API compilada es `/api` (vale
+  para cualquier servidor) y la cookie del refresh token vive en `/api/auth`.
+- `.dockerignore` en la raíz: fuera `node_modules`, `dist`, `apps/movil`, los tests, la documentación y cualquier `.env`.
+- Workflow de GitHub Actions (`.github/workflows/ci.yml`): lint, tipos, tests y build de todo el monorepo en cada push y pull request; en los
+  push, además, publica la imagen en ghcr.io (`latest` desde `main` y `develop` desde `develop`).
+- Validación ejecutada: `docker build` sin errores, `nginx -t` correcto y `apiUrl: "/api"` dentro del bundle. Con el `docker compose` del repo
+  STUDATE---DOCKER en local: recargar en `/dates` y en `/admin/usuarios` da 200, `/api/ping` responde a través de nginx, el login de Laia
+  por `/api/auth/login` entra en La Orla y al recargar la sesión se mantiene (`/api/auth/refresh` 200 con la cookie y después `/users/me`),
+  sin ningún error en la consola. El workflow no se ha podido ejecutar todavía: lo hará el primer push.
+- Prompt de IA usado: el del bloque "Primer despliegue en Docker" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).
+- Más tarde, en `feat/https`: la configuración de nginx se divide en `apps/web/nginx/default.conf` (el server de http, en la imagen) y
+  `apps/web/nginx/studate-app.conf` (las reglas, que incluyen con `include` ese server y el de https del repo de despliegue). Probado con el
+  compose por https en local: TLS 1.3, HTTP/2, cookie `Secure` y la sesión se renueva.
+
+### 2026-11-25 · Sprint 2: La Orla en la web (`feat/orla-web`)
+
+- La Orla es la pantalla principal del estudiante, como un Tinder pero de estudiantes. El servicio `orlaService` y sus modelos van en
+  `packages/shared` (`next`, `vote`, `undo`), para que los use también el móvil.
+- **Pantalla** (`pages/Orla.tsx`): la tarjeta del Expediente (foto o iniciales, nombre con la edad, titulación, "qué busca" y bio), los botones
+  F, deshacer y A+, el cupo de A+ de hoy en la cabecera y los estados de cargando (esqueleto), vacío ("ya has visto a todo tu campus") y error.
+  Se vota con los botones y con las flechas del teclado; con el cupo lleno, el botón A+ se desactiva con el aviso de volver mañana.
+- **Gesto de deslizar** (`ExpedienteCard` + `swipe.ts`): con Pointer Events, así que vale igual para el ratón y para el dedo. La tarjeta sigue al
+  gesto con una rotación ligera y un sello A+ o F según el lado; al soltar, si se pasa del umbral (90 px) sale volando y vota, y si no, vuelve a
+  su sitio. Un arrastre corto no vota. Los botones y las flechas reutilizan la misma animación. Respeta `prefers-reduced-motion`.
+- **Aviso de deshacer y ¡Date!** (`UndoToast`, `MatchScreen`): tras votar, un aviso con una cuenta atrás de 10 s; desaparece solo o, al pulsar,
+  devuelve el perfil anterior. Cuando un A+ forma un A+ mutuo, la pantalla ¡Tenéis Date! a pantalla completa con las dos personas, el sorteo del
+  turno y los botones de ir a Mis Dates o seguir en La Orla.
+- Todo el CSS nuevo va en `componentes.css` con las variables del tema, copiando las clases de la plantilla (`.exp`, `.voto`, `.cupo`, `.sello`,
+  `.match`...). Ninguna pantalla define colores propios.
+- Validación ejecutada: `npm run lint`, `npm run typecheck`, `npm run build` y `npm test` en verde (3 tests nuevos del umbral del gesto). En el
+  navegador contra la API local con el seed: Laia ve Expedientes y vota con los botones y con el teclado; aprobar a Nerea (que ya le había dado
+  A+) abre el ¡Date! con el sorteo; votar F enseña el aviso de deshacer con la cuenta atrás; deshacer devuelve el perfil anterior; el cupo baja
+  con cada A+; sin errores en consola; a 1366 px y a 390 px. El gesto físico de arrastrar queda por mirar a mano en el navegador (su lógica, el
+  umbral, está en el test).
+- Prompt de IA usado: el del bloque "3 · La Orla" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).
+
+### 2026-11-25 · Sprint 2: Mi perfil en la web (`feat/perfil-web`)
+
+- `pages/MiPerfil.tsx`: al entrar se rellena con `GET /users/me` (nombre, fecha de nacimiento, titulación, "qué busco", bio, foto y contactos) y se
+  guarda con `PUT /users/me` (`userService.updateMe`, nuevo en `packages/shared`). El email se enseña pero no se edita; el rol ni aparece.
+- La foto: el fichero se reduce en el navegador (`utils/image-to-data-url.ts`, un `<canvas>` a 640 px y JPEG al 82 %) antes de guardarla en
+  base64, para no pasar de los 200 KB de la API. Se puede quitar (`photo: ''`).
+- Los contactos de confianza se editan en sitio (nombre, correo y teléfono opcional), hasta 3, con un vacío que explica que son opcionales. Solo se
+  envían los que tienen nombre y correo. Al guardar, `refreshMe` (nuevo en el store de la sesión) refresca la copia en memoria para que el menú
+  enseñe el nombre y la foto nuevos.
+- Validación ejecutada: `npm run lint`, `npm run typecheck`, `npm run build` y `npm test` en verde. En el navegador contra la API local: Laia ve
+  su perfil con sus 2 contactos; cambia la bio y "qué busco", guarda, y al recargar los cambios siguen; sin errores en consola; a 1366 px y a 390 px.
+- Prompt de IA usado: el del bloque "4 · Mi perfil" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).
+
+### 2026-11-25 · Sprint 2: Mis Dates y el chat en la web (`feat/chat-web`)
+
+- **Mis Dates** (`pages/MisDates.tsx`, `components/dates/ListaDates.tsx`): las dos bandejas del blog, Pendientes (fuego) y En curso (corazón), con su
+  contador; el aviso de los Dates que esperan que escriba yo y cuánto queda del más urgente; y una tarjeta por Date con la otra persona, a quién le
+  toca ("Te toca escribir a ti" / "Empieza Pau") y el reloj de lo que falta para caducar. El reloj se recalcula cada medio minuto con el hook `useNow`.
+  Los cerrados no se listan. Se cargan todos de una vez (`dateService.getMyDates`, hasta 100) y se reparten entre las bandejas en la pantalla.
+- **La misma pantalla para la lista y la conversación**: `/dates` y `/dates/:dateId`. En escritorio se ven las dos columnas (340 px + la charla) y
+  en el móvil solo una, con el botón de volver, como en la plantilla. Un Date abierto por su URL que no está en las bandejas (uno cerrado) se pide
+  aparte con `GET /dates/:id`.
+- **El socket** (`packages/shared/src/services/chat.service.ts` y `models/chat.model.ts`, los mismos eventos que el backend): `connectChat()` abre
+  socket.io contra el origen de la API (con `VITE_API_URL=/api`, contra el origen de la página, donde nginx reenvía `/socket.io`) mandando el access
+  token en el handshake con una función, para que cada reconexión lleve el token actual. Si el servidor rechaza por "El token ha caducado", renueva
+  con el refresh token y reconecta. La web lo abre una vez por pantalla con el hook `useChat` y lo cierra al salir.
+- **La conversación** (`components/dates/Charla.tsx`): carga la última página del historial por HTTP (`dateService.getMessages`, 50 por página, con
+  "Ver mensajes anteriores" si hay más), entra en la sala del Date (`date:join`, y otra vez en cada reconexión) y escucha `date:message`,
+  `date:updated`, `date:read` y `chat:error`. Mis mensajes a la derecha en azul con la hora y ✓ / ✓✓ (leído); los de la otra persona a la izquierda;
+  separadores de día (HOY, AYER, fecha). Mientras el Date está pendiente, solo escribe quien tiene el turno: la otra persona ve el campo desactivado
+  con "Empieza Pau…" y el reloj "Quedan 23 h 12 min"; el primer mensaje pasa el Date a En curso y la lista lo mueve de bandeja sola gracias a
+  `date:updated`. La prórroga (+24 h, una vez) está en la franja del Date y la otra persona la ve llegar sin recargar. En un Date cerrado se lee pero
+  no se escribe. Los avisos del servidor (`chat:error`) salen como toast.
+- Lo de `packages/shared` sirve igual para el móvil: `otherUser`, `isMyTurn`, `remainingMs`, `replaceDate` (`utils/dates.ts`) y `MESSAGES_PAGE_SIZE`.
+- Validación ejecutada: `npm run lint`, `npm run typecheck` y `npm test` en verde (5 tests nuevos de los textos de tiempo). En el navegador contra
+  la API local: Hugo ve su Date pendiente con Júlia en Pendientes (1), el aviso "Tienes 1 Date esperando que escribas tú. Quedan 47 h" y la etiqueta
+  de prórroga; abre la conversación y ve "Te toca empezar. Quedan 47 h 44 min" y el vacío "Aún no hay mensajes"; escribe el primer mensaje y al
+  momento la franja pasa a "En curso · Empezó hoy a las 16:26" y las bandejas a Pendientes 0 / En curso 1 sin recargar; Júlia, desde otro socket,
+  contesta y su mensaje aparece al instante, y al marcarlo como leído el mensaje de Hugo pasa de ✓ a ✓✓. Sin errores en consola de la app; a 1366 px
+  (dos columnas) y a 390 px (lista y conversación por separado, con el botón de volver).
+- Prompt de IA usado: el del bloque "5 · Mis Dates y chat" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).
+
+### 2026-11-25 · Sprint 2: Seguridad en la web (`feat/seguridad-web`)
+
+- Los servicios de seguridad van en `packages/shared` (`blockService`, `reportService`, `safetyAlertService`), con sus modelos ya creados en la
+  estructura, y los eventos `alert:new` y `alert:updated` en el contrato del socket (`chat.model.ts`), para que el móvil y el backoffice los usen igual.
+- **Las ventanas** (`components/Ventana.tsx`): el mismo patrón que `ConfirmModal`, pero con el contenido libre y, por debajo de 640 px, pegada abajo como
+  una hoja, como en la plantilla. Se pinta con un portal en el `body`, porque se abre desde dentro de la tarjeta del Expediente, que tiene un `transform`
+  (y ahí `position: fixed` no funciona). Como los eventos de React suben por el árbol de componentes aunque el DOM esté en otro sitio, la ventana corta
+  el `pointerdown` para que la tarjeta no capture el puntero y se quede con el clic (fue el primer fallo al probarla).
+- **Bloquear y mandar un parte** (`components/seguridad/`): el botón de los tres puntos (`AccionesSeguridad`) está en la esquina del Expediente de La
+  Orla y en la cabecera del chat, siempre a un toque. Abre un menú con las dos acciones. `ReportarModal`: el motivo (obligatorio, con los cuatro de la
+  API), un comentario opcional y el atajo a bloquear; desde el chat manda también el Date. `BloquearModal` explica lo que pasa y pide confirmación en
+  rojo; si ya estaba bloqueado (409) lo dice y no es un error. Al bloquear desde La Orla se carga el siguiente Expediente; desde el chat, el Date cerrado
+  que devuelve la API sustituye al de la lista (desaparece de las bandejas) y se vuelve a Mis Dates.
+- **Botón de ayuda** (`BotonAyuda`, `AyudaModal`): el escudo rojo de la cabecera del chat (no sale en un Date cerrado). La ventana pide los contactos
+  de confianza a `GET /users/me` al abrirse para decir a cuántos se avisará (o, sin contactos, que se avisa igualmente al equipo y que se pueden añadir
+  en Mi perfil), un mensaje opcional, el recordatorio del 112 y el botón en rojo. Al enviar, un toast dice a quién se ha avisado. Si falla, se puede
+  volver a enviar sin cerrar la ventana.
+- CSS nuevo en `componentes.css`: `.ventana`, `.t-ventana`, `.opciones`, `.urg`, `.botonera`, `.exp .mas` y `.et.peligro`, con las variables del tema.
+- Validación ejecutada: `npm run lint`, `npm run typecheck`, `npm run build` y `npm test` en verde. En el navegador contra la API local: Laia abre el menú
+  del Expediente, manda un parte (sin motivo avisa; con "Acoso o insultos" y un comentario, toast de enviado) y bloquea a Usuario (toast y el siguiente
+  Expediente); Hugo, en el chat con Júlia (campo desactivado con "Empieza Júlia…"), la bloquea desde los tres puntos y vuelve a Mis Dates sin Dates;
+  Usuario pulsa el escudo en el chat con Oriol, ve "Avisaremos ahora a tu contacto de confianza y al equipo", escribe un mensaje y pide ayuda: toast
+  de enviado y el aviso simulado al contacto en el log de la API. Sin errores en consola de la app; a 1366 px y a 390 px (la ventana como hoja abajo).
+- Prompt de IA usado: el del bloque "6 · Seguridad" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).
+
+### 2026-11-25 · Sprint 2: el backoffice en React (`feat/backoffice`)
+
+- Lo del Angular del Sprint 1 rehecho en React con la piel de Studate y el mismo CSS global que la app del estudiante. Las piezas comunes están en
+  `components/admin/` (`Persona`, `EstadoLista`, `PaginacionBo`) y en el hook `usePagedList`, que pide una página a la API cada vez que cambian la
+  página o los filtros (paginación del servidor de 10 en 10, `PAGE_SIZE`), cancela la petición anterior y da el estado (cargando, normal, vacío o
+  error). Cada pantalla pinta una tabla y, por debajo de 760 px, las mismas filas como tarjetas (`.tarjetas-bo`), como en la plantilla.
+- **Usuarios** (`UsuariosAdmin`, `UsuarioForm`): búsqueda por nombre o correo (con 300 ms de espera para no pedir una página por tecla), filtros por
+  rol, estado y titulación y el de solo archivados; acciones de editar, archivar, restaurar y eliminar (solo si está archivado, como pide la API), con
+  confirmación. El formulario crea (con contraseña) y edita (sin ella) con rol, cuenta activa, perfil y foto reducida en el navegador; la zona de
+  peligro archiva, restaura o elimina. El 409 del correo repetido se enseña como "Ya hay otra cuenta con este correo".
+- **La Orla** (`OrlaAdmin`): los votos con filtro por persona (los estudiantes del directorio) y por nota, "Hoy, 16:34" en la columna de cuándo, y
+  eliminar con confirmación. Sin "nuevo voto": con la app del estudiante el admin ya no crea votos a mano.
+- **Dates y Planes** (`DatesAdmin`): dos pestañas. Dates con filtro por estado, pareja con los dos avatares, turno y caducidad, y las acciones de ver
+  (ventana con los datos y el historial completo: cada cambio con su chip, el motivo, quién lo hizo y cuándo), cerrar a mano (con motivo opcional, que
+  queda en el historial; `dateService.updateStatus` acepta ahora `reason`) y eliminar. Planes con búsqueda por sitio, estado y archivados, el sitio
+  elegido o el número de tiradas, el detalle con las tiradas y archivar, restaurar y eliminar.
+- **Seguridad** (`SeguridadAdmin`): el socket del chat (`useChat`) sirve también aquí: un admin entra solo en la sala `admins` y cuando alguien pide
+  ayuda llega `alert:new`, la lista se vuelve a pedir sin recargar y sale un toast con quién. Las alertas abiertas se marcan como atendidas o falsa
+  alarma (y `alert:updated` actualiza a los demás admin); de cada una se dice con quién estaba (se pide su Date) y el mensaje. Los partes, con filtros
+  por estado y gravedad, se revisan en una ventana: revisado o descartado, la gravedad y lo que se ha hecho.
+- Validación ejecutada: `npm run lint`, `npm run typecheck`, `npm run build` y `npm test` en verde (2 tests nuevos de `fechaHora` y `haceCuanto`). En el
+  navegador como admin contra la API local: la lista de usuarios con 12 usuarios en 2 páginas, el filtro de archivados (Dani y Sara), el formulario de
+  Dani rellenado y su restauración desde la zona de peligro; los 25 votos en 3 páginas; los 4 Dates con el detalle del cerrado por bloqueo (historial
+  "A+ mutuo · por el servidor" y "Bloqueo · por Hugo") y los 2 Planes; en Seguridad, Laia pide ayuda desde la API y la alerta aparece al momento con su
+  toast, se marca como atendida y desaparece de las abiertas; un parte se revisa y pasa a Revisado. Sin errores en consola; a 1366 px y a 390 px (las
+  tablas como tarjetas y las ventanas como hoja).
+- Prompt de IA usado: el del bloque "7 · Backoffice en React" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).
+
+### 2026-11-25 · Sprint 2: la app del móvil (`feat/movil`)
+
+- La app del estudiante en Expo (React Native) con Expo Router, en `apps/movil`, con el mismo aspecto que la web porque todo lo que no se pinta es
+  de `packages/shared`: el tema (`tokens` en los `StyleSheet`), los modelos, el cliente HTTP con JWT, los servicios, el socket del chat y, desde
+  esta rama, también los textos de tiempo (`utils/tiempo.ts` se ha movido de la web al paquete compartido, con sus tests). Sin funciones nativas.
+- **Base** (`_layout.tsx`, `(auth)/`, `(tabs)/`): `configureHttp` con la cabecera `X-Client: movil` (el login devuelve el refresh token en el JSON) y el
+  almacén cifrado del teléfono como `refreshTokenStore` (`expo-secure-store`; en el navegador, `localStorage` solo para desarrollo). Al arrancar se
+  recupera la sesión antes de pintar y el layout raíz hace de rutas protegidas: sin sesión solo se puede estar en login y registro; con ella, en las
+  pestañas (La Orla, Mis Dates y Mi perfil, con iconos de Ionicons). Un admin ve que el backoffice es solo web. Cerrar y abrir la app mantiene la sesión.
+- **La Orla** (`orla.tsx`, `ExpedienteCard`): el gesto con `PanResponder` y `Animated` (vienen con React Native): la tarjeta sigue al dedo con rotación,
+  los sellos A+ y F aparecen al arrastrar, al soltar más allá del umbral (90 px, el de la web) sale volando y vota, y si no vuelve con un muelle. Solo coge
+  el gesto si el dedo va en horizontal, para no robarle el scroll a la pantalla. Botones F y A+, cupo del día, aviso de deshacer con cuenta atrás y la
+  pantalla ¡Tenéis Date! en un `Modal`.
+- **Mis Dates y el chat** (`dates/index.tsx`, `dates/[dateId].tsx`): las bandejas con su reloj y el avisador (la lista se vuelve a pedir al volver a la
+  pestaña), y la conversación con el historial por HTTP, la sala por el socket (`useChat`, el mismo que en la web), el turno, la prórroga, los ✓✓ y los
+  separadores de día. Un mensaje de la web llega al móvil al momento, y al revés.
+- **Mi perfil y seguridad** (`perfil.tsx`, `components/Seguridad.tsx`): nombre, fecha, titulación (pastillas), qué busco, bio y los contactos de
+  confianza (hasta 3, opcionales); la foto se ve pero se cambia desde la web (la galería es una función nativa). Bloquear y mandar un parte desde el
+  Expediente y desde el chat, y el botón de ayuda en el chat, en hojas que suben desde abajo (`Modal`), con los mismos textos que la web.
+- **Contra el servidor**: `EXPO_PUBLIC_API_URL=https://ea3.upc.edu/api` (la API por HTTPS detrás de nginx); el socket va contra el origen, donde nginx
+  reenvía `/socket.io`. Guía en `apps/movil/README.md` (Expo Go, la IP de la wifi en local, el emulador). La prueba con datos móviles queda para el
+  despliegue.
+- Validación ejecutada: `npm run lint`, `npm run typecheck` (web, móvil y shared) y `npm test` en verde (los tests de tiempo pasan al paquete compartido).
+  La app en el navegador (`expo start --web`) a 390 px contra la API local: el login de Laia lleva a las pestañas y al recargar sigue dentro; en La Orla
+  aprueba a Nerea (que ya le había dado A+) y sale el ¡Tenéis Date! con el sorteo y el aviso de deshacer con la cuenta atrás; en Mis Dates aparece el
+  Date pendiente con "Te toca escribir a ti" y el reloj; en el chat escribe el primer mensaje (pasa a En curso), Nerea responde desde otro socket y el
+  mensaje llega al momento con el ✓✓ del leído; Mi perfil rellenado con sus datos y sus 2 contactos; el botón de ayuda enseña "Avisaremos ahora a tus
+  2 contactos de confianza". Sin errores en consola. Queda por verla en un teléfono con Expo Go (el gesto físico y el almacén cifrado).
+- Prompt de IA usado: el del bloque "8 · La app en el móvil" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).
+
+### 2026-11-25 · Sprint 2: cierre y documentación (`feat/documentacion`)
+
+- **GitHub Actions**: `ci.yml` pasa `npm run lint`, `npm run typecheck` (web, móvil y shared), `npm test` (los tests de la web y del paquete compartido)
+  y `npm run build` en cada push y pull request a `main` y `develop`; si es un push, publica la imagen de la web en ghcr.io. La app del móvil no tiene
+  imagen: solo se comprueban sus tipos.
+- **README y LOGS al día**: el README de la raíz con el stack completo (socket.io-client, expo-secure-store), el de `apps/movil` con cómo arrancarla
+  y contra qué API, y este LOGS con el contrato entero del sprint y las tareas de los nueve bloques. El flujo de arquitectura (web, móvil, nginx, API,
+  socket.io y MongoDB, y el camino de una petición con JWT) está en el README de
+  [STUDATE---DOCKER](https://github.com/mariacazorla/STUDATE---DOCKER); el diagrama de clases, en el de
+  [STUDUDATE---BACKEND](https://github.com/mariacazorla/STUDUDATE---BACKEND).
+- Prompt de IA usado: el del bloque "9 · Segundo despliegue y cierre" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).
