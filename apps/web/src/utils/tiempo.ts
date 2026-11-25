@@ -58,3 +58,25 @@ export function empezoEl(iso: string, ahora: Date = new Date()): string {
   const cuando = dia === 'HOY' ? 'hoy' : dia === 'AYER' ? 'ayer' : `el ${dia}`;
   return `${cuando} a las ${horaCorta(iso)}`;
 }
+
+// Fecha y hora cortas para las tablas del backoffice: "Hoy, 21:47", "Ayer, 23:10" o "12/11/2026, 10:00"
+export function fechaHora(iso: string, ahora: Date = new Date()): string {
+  const dia = etiquetaDia(iso, ahora);
+  const prefijo = dia === 'HOY' ? 'Hoy' : dia === 'AYER' ? 'Ayer' : dia;
+  return `${prefijo}, ${horaCorta(iso)}`;
+}
+
+// Hace cuánto pasó algo, para las alertas: "hace un momento", "hace 4 min", "hace 2 h" o la fecha
+export function haceCuanto(iso: string, ahora: Date = new Date()): string {
+  const ms = ahora.getTime() - new Date(iso).getTime();
+  if (ms < MINUTO) {
+    return 'hace un momento';
+  }
+  if (ms < HORA) {
+    return `hace ${Math.floor(ms / MINUTO)} min`;
+  }
+  if (ms < 24 * HORA) {
+    return `hace ${Math.floor(ms / HORA)} h`;
+  }
+  return fechaHora(iso, ahora);
+}

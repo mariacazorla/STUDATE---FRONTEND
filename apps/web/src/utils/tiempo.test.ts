@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { empezoEl, etiquetaDia, horaCorta, restanteCorto, restanteLargo } from './tiempo';
+import { empezoEl, etiquetaDia, fechaHora, haceCuanto, horaCorta, restanteCorto, restanteLargo } from './tiempo';
 
 const HORA = 60 * 60 * 1000;
 const MINUTO = 60 * 1000;
@@ -35,5 +35,22 @@ describe('tiempo', () => {
     expect(empezoEl(new Date(2026, 10, 12, 16, 43).toISOString(), ahora)).toBe(
       'el 12/11/2026 a las 16:43',
     );
+  });
+});
+
+describe('tiempo del backoffice', () => {
+  it('fechaHora() pone Hoy, Ayer o la fecha delante de la hora', () => {
+    const ahora = new Date(2026, 10, 25, 22, 0);
+    expect(fechaHora(new Date(2026, 10, 25, 21, 47).toISOString(), ahora)).toBe('Hoy, 21:47');
+    expect(fechaHora(new Date(2026, 10, 24, 23, 10).toISOString(), ahora)).toBe('Ayer, 23:10');
+    expect(fechaHora(new Date(2026, 10, 12, 10, 0).toISOString(), ahora)).toBe('12/11/2026, 10:00');
+  });
+
+  it('haceCuanto() redacta el tiempo que ha pasado', () => {
+    const ahora = new Date(2026, 10, 25, 22, 0);
+    expect(haceCuanto(new Date(2026, 10, 25, 21, 59, 50).toISOString(), ahora)).toBe('hace un momento');
+    expect(haceCuanto(new Date(2026, 10, 25, 21, 56).toISOString(), ahora)).toBe('hace 4 min');
+    expect(haceCuanto(new Date(2026, 10, 25, 19, 30).toISOString(), ahora)).toBe('hace 2 h');
+    expect(haceCuanto(new Date(2026, 10, 12, 10, 0).toISOString(), ahora)).toBe('12/11/2026, 10:00');
   });
 });

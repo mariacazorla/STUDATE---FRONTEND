@@ -206,6 +206,14 @@ Lo que backend y frontend tienen que cumplir igual. Si algo de aquí cambia, se 
 - [x] Bloquear y reportar desde el Expediente y desde el chat · Miguel Ángel
 - [x] Botón de ayuda en el chat · Diego
 
+#### Backoffice en React (`feat/backoffice`)
+
+- [x] Usuarios: lista con búsqueda, filtros y paginación del servidor de 10 en 10 · Miguel Ángel
+- [x] Usuarios: crear y editar; archivar, restaurar y eliminar · Miguel Ángel
+- [x] La Orla del admin: votos con filtros · María
+- [x] Dates y Planes del admin, con el historial de cada Date · María
+- [x] Seguridad del admin: alertas de ayuda en tiempo real y partes con su gravedad · Diego
+
 ## Bitácora
 
 La bitácora del Seminario 7, de donde viene este código, se conserva en el tag `seminari7-base`
@@ -536,3 +544,31 @@ La bitácora del Seminario 7, de donde viene este código, se conserva en el tag
   Usuario pulsa el escudo en el chat con Oriol, ve "Avisaremos ahora a tu contacto de confianza y al equipo", escribe un mensaje y pide ayuda: toast
   de enviado y el aviso simulado al contacto en el log de la API. Sin errores en consola de la app; a 1366 px y a 390 px (la ventana como hoja abajo).
 - Prompt de IA usado: el del bloque "6 · Seguridad" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).
+
+### 2026-11-25 · Sprint 2: el backoffice en React (`feat/backoffice`)
+
+- Lo del Angular del Sprint 1 rehecho en React con la piel de Studate y el mismo CSS global que la app del estudiante. Las piezas comunes están en
+  `components/admin/` (`Persona`, `EstadoLista`, `PaginacionBo`) y en el hook `usePagedList`, que pide una página a la API cada vez que cambian la
+  página o los filtros (paginación del servidor de 10 en 10, `PAGE_SIZE`), cancela la petición anterior y da el estado (cargando, normal, vacío o
+  error). Cada pantalla pinta una tabla y, por debajo de 760 px, las mismas filas como tarjetas (`.tarjetas-bo`), como en la plantilla.
+- **Usuarios** (`UsuariosAdmin`, `UsuarioForm`): búsqueda por nombre o correo (con 300 ms de espera para no pedir una página por tecla), filtros por
+  rol, estado y titulación y el de solo archivados; acciones de editar, archivar, restaurar y eliminar (solo si está archivado, como pide la API), con
+  confirmación. El formulario crea (con contraseña) y edita (sin ella) con rol, cuenta activa, perfil y foto reducida en el navegador; la zona de
+  peligro archiva, restaura o elimina. El 409 del correo repetido se enseña como "Ya hay otra cuenta con este correo".
+- **La Orla** (`OrlaAdmin`): los votos con filtro por persona (los estudiantes del directorio) y por nota, "Hoy, 16:34" en la columna de cuándo, y
+  eliminar con confirmación. Sin "nuevo voto": con la app del estudiante el admin ya no crea votos a mano.
+- **Dates y Planes** (`DatesAdmin`): dos pestañas. Dates con filtro por estado, pareja con los dos avatares, turno y caducidad, y las acciones de ver
+  (ventana con los datos y el historial completo: cada cambio con su chip, el motivo, quién lo hizo y cuándo), cerrar a mano (con motivo opcional, que
+  queda en el historial; `dateService.updateStatus` acepta ahora `reason`) y eliminar. Planes con búsqueda por sitio, estado y archivados, el sitio
+  elegido o el número de tiradas, el detalle con las tiradas y archivar, restaurar y eliminar.
+- **Seguridad** (`SeguridadAdmin`): el socket del chat (`useChat`) sirve también aquí: un admin entra solo en la sala `admins` y cuando alguien pide
+  ayuda llega `alert:new`, la lista se vuelve a pedir sin recargar y sale un toast con quién. Las alertas abiertas se marcan como atendidas o falsa
+  alarma (y `alert:updated` actualiza a los demás admin); de cada una se dice con quién estaba (se pide su Date) y el mensaje. Los partes, con filtros
+  por estado y gravedad, se revisan en una ventana: revisado o descartado, la gravedad y lo que se ha hecho.
+- Validación ejecutada: `npm run lint`, `npm run typecheck`, `npm run build` y `npm test` en verde (2 tests nuevos de `fechaHora` y `haceCuanto`). En el
+  navegador como admin contra la API local: la lista de usuarios con 12 usuarios en 2 páginas, el filtro de archivados (Dani y Sara), el formulario de
+  Dani rellenado y su restauración desde la zona de peligro; los 25 votos en 3 páginas; los 4 Dates con el detalle del cerrado por bloqueo (historial
+  "A+ mutuo · por el servidor" y "Bloqueo · por Hugo") y los 2 Planes; en Seguridad, Laia pide ayuda desde la API y la alerta aparece al momento con su
+  toast, se marca como atendida y desaparece de las abiertas; un parte se revisa y pasa a Revisado. Sin errores en consola; a 1366 px y a 390 px (las
+  tablas como tarjetas y las ventanas como hoja).
+- Prompt de IA usado: el del bloque "7 · Backoffice en React" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).

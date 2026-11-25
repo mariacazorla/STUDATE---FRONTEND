@@ -1404,3 +1404,314 @@
 .et.peligro {
   color: var(--ko);
 }
+
+/* ==========================================================================================
+   Backoffice: cabeceras, filtros, tablas con acciones y tarjetas en el móvil
+   ========================================================================================== */
+
+/* La cabecera de cada pantalla: el título y, a la derecha, el botón principal */
+.bo-cab {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+
+/* Los filtros: la búsqueda (que estira) y los desplegables */
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.filtros .buscar {
+  display: flex;
+  flex: 1 1 220px;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 12px;
+  border: 1.5px solid var(--borde-campo);
+  border-radius: var(--r-campo);
+  background: var(--blanco);
+  color: var(--gris);
+}
+
+.filtros .buscar .ico {
+  flex: none;
+}
+
+.filtros .buscar input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--noche);
+  font-size: 14px;
+}
+
+.filtros select {
+  height: 42px;
+  padding: 0 10px;
+  border: 1.5px solid var(--borde-campo);
+  border-radius: var(--r-campo);
+  background: var(--blanco);
+  color: var(--noche);
+  font: 500 14px/1 var(--f-text);
+}
+
+/* Un filtro de marcar (solo archivados) */
+.filtros .marcar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 42px;
+  padding: 0 12px;
+  border: 1.5px solid var(--borde-campo);
+  border-radius: var(--r-campo);
+  background: var(--blanco);
+  font-size: 14px;
+}
+
+.filtros .marcar input {
+  margin: 0;
+  accent-color: var(--azul);
+}
+
+/* Una persona en una tabla: avatar pequeño, nombre y detalle */
+.persona {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.persona .av,
+.persona .ini-av {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  font-size: 12px;
+}
+
+.persona > span {
+  min-width: 0;
+}
+
+.persona b {
+  display: block;
+  font-size: 14px;
+}
+
+.persona > span > span {
+  display: block;
+  color: var(--gris);
+  font-size: 12.5px;
+}
+
+/* Dos avatares solapados: la pareja de un Date */
+.persona .av + .av,
+.persona .av + .ini-av,
+.persona .ini-av + .av,
+.persona .ini-av + .ini-av {
+  margin-left: -14px;
+}
+
+/* Las acciones de una fila: botones pequeños a la derecha */
+.acc-fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.acc-fila button {
+  height: 34px;
+  padding: 0 10px;
+  border: 1.5px solid var(--borde-campo);
+  border-radius: 10px;
+  background: var(--blanco);
+  color: var(--noche);
+  font: 600 13px/1 var(--f-text);
+}
+
+.acc-fila button.peligro {
+  border-color: var(--ko-suave);
+  color: var(--ko);
+}
+
+.acc-fila button:disabled {
+  opacity: 0.5;
+}
+
+/* Las tablas y las tarjetas: una u otra según el ancho */
+.tarjetas-bo {
+  display: none;
+}
+
+.tarjetas-bo .card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.tarjetas-bo .acc-fila {
+  justify-content: flex-start;
+}
+
+@media (max-width: 760px) {
+  .tabla-wrap {
+    display: none;
+  }
+
+  .tarjetas-bo {
+    display: grid;
+    gap: 10px;
+    padding: 10px;
+  }
+}
+
+/* Las pestañas de una pantalla (Dates y Planes, Alertas y Partes) */
+.pestanas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pestanas button {
+  height: 36px;
+  padding: 0 14px;
+  border: 1.5px solid var(--borde-campo);
+  border-radius: var(--r-pastilla);
+  background: var(--blanco);
+  color: var(--noche);
+  font: 600 13.5px/1 var(--f-text);
+}
+
+.pestanas button[aria-pressed='true'] {
+  border-color: var(--azul);
+  background: var(--azul);
+  color: var(--blanco);
+}
+
+/* Un campo de marcar suelto en un formulario (cuenta activa) */
+.marcar-linea {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.marcar-linea input {
+  margin: 0;
+  accent-color: var(--azul);
+}
+
+/* La zona de peligro del formulario: archivar, restaurar o eliminar */
+.peligro-z {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 14px 16px;
+  border: 1.5px dashed var(--ko-suave);
+  box-shadow: none;
+}
+
+.btn2.peligro {
+  border-color: var(--ko-suave);
+  color: var(--ko);
+}
+
+/* Una lista de datos (etiqueta y valor) en una ventana de detalle */
+.datos {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 14px;
+  margin: 0;
+  font-size: 14px;
+}
+
+.datos dt {
+  color: var(--gris);
+}
+
+.datos dd {
+  margin: 0;
+}
+
+/* El historial de un Date (o las tiradas de un Plan): una línea por entrada, con su chip */
+.historial {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historial li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.historial li .chip {
+  flex: none;
+}
+
+.historial li small {
+  display: block;
+  color: var(--gris);
+  font-size: 12px;
+}
+
+/* Las alertas de ayuda del admin: una tarjeta por alerta, la abierta resaltada en rojo */
+.alertas {
+  display: grid;
+  gap: 10px;
+}
+
+.alerta-c {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 6px 12px;
+  align-items: center;
+  padding: 14px;
+}
+
+.alerta-c.abierta {
+  box-shadow:
+    inset 4px 0 0 var(--ko),
+    var(--sombra-tarjeta);
+}
+
+.alerta-c b {
+  display: block;
+  font-size: 15px;
+}
+
+.alerta-c p {
+  overflow-wrap: anywhere;
+}
+
+.alerta-c .btn .ico {
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+}
+
+@media (max-width: 640px) {
+  .alerta-c {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .alerta-c > .fila,
+  .alerta-c > .chip {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}

@@ -266,3 +266,17 @@ Modelo en el Sprint 2: Claude Fable 5.2.
   - `Ventana` con un portal en el `body` y `stopPropagation` del `pointerdown`; `AccionesSeguridad` (menú, parte y bloqueo) reutilizado en el Expediente (prop `acciones` de `ExpedienteCard`) y en la cabecera del chat; `BotonAyuda` + `AyudaModal`, que pide `GET /users/me` al abrirse.
   - Servicios y eventos nuevos en `packages/shared`. Tras bloquear, La Orla carga el siguiente Expediente y el chat vuelve a Mis Dates con el Date cerrado fuera de las bandejas.
   - Probado en el navegador contra la API local (parte, bloqueo desde los dos sitios, ayuda con el aviso simulado en el log), a 1366 px y a 390 px.
+
+### 10. El backoffice en React (`feat/backoffice`)
+
+- **Pregunta:** cómo rehacer en React el backoffice del Angular del Sprint 1 (usuarios, La Orla, Dates y Planes) y añadir la seguridad (alertas y partes), con la paginación en el servidor y solo para el admin.
+- **Prompt:** «Según la planificación establecida previamente, vamos a proceder de esta forma. Ahora el backoffice (bloque 7 del plan, de la 39 a la 43). Es lo más simple que hay: lo que teníamos en Angular, rehecho en React con el estilo visual que ya hemos acordado, adaptado al backoffice, y con el mismo CSS global que la app del estudiante. Usuarios, La Orla, Dates y Planes, y la parte de seguridad: las alertas de ayuda y los partes. Recuerda los requisitos de siempre: la paginación de 10 en 10 se hace en el servidor, para que el proyecto sea eficiente, y solo entra el administrador. Dime el plan de acción.»
+- **Incoherencias:**
+  - La plantilla filtra los votos "por persona" con una búsqueda de texto, pero la API solo filtra por el id del usuario: se usa un desplegable con los estudiantes del directorio.
+  - La tabla de Dates de la plantilla tiene una columna "Plan", que obligaría a una petición por fila: se quita y los Planes tienen su propia pestaña con la pareja de cada uno.
+  - Las alertas solo traen el id del Date: para decir "Date con Pau" hay que pedir cada Date aparte (son pocas por página).
+  - El Angular del Sprint 1 tenía el formulario de crear y editar Planes; aquí los Planes se ven, se archivan, se restauran y se eliminan, pero no se crean a mano: el Cambio de Aula del estudiante no está en el plan de este sprint y crear Planes desde el backoffice no aporta.
+- **Solución:**
+  - `usePagedList` y las piezas de `components/admin/` para que las cinco pantallas paginen y pinten igual, con la tabla en escritorio y tarjetas en el móvil.
+  - `UsuariosAdmin` y `UsuarioForm` (con `useForm` y la foto reducida como en Mi perfil), `OrlaAdmin`, `DatesAdmin` (pestañas, detalle con el historial, cerrar con motivo) y `SeguridadAdmin` (socket con `alert:new` y `alert:updated`, atender, revisar partes).
+  - Probado en el navegador como admin, con una alerta lanzada desde la API para ver que llega sin recargar; a 1366 px y a 390 px.
