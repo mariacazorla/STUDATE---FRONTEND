@@ -24,7 +24,7 @@ STUDATE---FRONTEND/
     web/               React + Vite: la app del estudiante y el backoffice del admin
     movil/             Expo (React Native): la app del estudiante en el móvil
   packages/
-    shared/            Lo que no se pinta: modelos, cliente HTTP con JWT, servicios de la API, el socket del chat y tema
+    shared/            Lo que no se pinta: modelos, cliente HTTP con JWT, servicios de la API (también los de seguridad), el socket del chat y tema
   mockups/             Mockups en HTML de las pantallas
 ```
 

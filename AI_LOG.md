@@ -253,3 +253,16 @@ Modelo en el Sprint 2: Claude Fable 5.2.
   - `chat.service.ts` en `packages/shared` con `connectChat()` (origen deducido de la URL de la API, token con función en `auth`, renovación y reconexión con "El token ha caducado") y el contrato de eventos en `chat.model.ts`. `dateService.getMyDates` y `getMessages` (página 1, los más nuevos).
   - `MisDates.tsx` con las dos columnas y un solo socket por pantalla (`useChat`); `ListaDates` con bandejas, aviso y reloj (`useNow`); `Charla` con el historial, la sala, el turno, la prórroga, los ✓✓ y los separadores de día. CSS nuevo en `componentes.css` con las variables del tema.
   - Probado en el navegador contra la API local con Júlia respondiendo desde otro socket; a 1366 px y a 390 px.
+
+### 9. Seguridad en la web (`feat/seguridad-web`)
+
+- **Pregunta:** cómo poner bloquear, mandar un parte y el botón de ayuda en la web, a un toque desde el Expediente y desde el chat, con el CSS global.
+- **Prompt:** «Según la planificación establecida previamente, vamos a proceder de esta forma. Ahora las funcionalidades de conciencia digital, la seguridad (bloque 6 del plan, de la 34 a la 38). Bloquear: si alguien te da mala espina, lo bloqueas y ya no vuelve a aparecer, ni en La Orla ni en los chats. Reportar: de momento el parte va al administrador [...]. Y el botón de ayuda con los contactos de confianza, que son opcionales: no se obliga a nadie a tenerlos, y si no hay, el aviso llega igualmente a los administradores. Primero el backend y después la web. Dime el plan de acción.»
+- **Incoherencias:**
+  - La plantilla tiene las tres ventanas como pantallas aparte sobre el chat; aquí son ventanas que se abren desde el chat y también desde el Expediente de La Orla, donde la plantilla no tenía ningún botón de más opciones.
+  - La tarjeta del Expediente tiene un `transform` para el gesto de deslizar, así que una ventana con `position: fixed` dentro de ella se pintaba mal, y además la tarjeta capturaba el puntero y se quedaba con los clics de la ventana. Primer intento: el menú se abría pero no respondía a los clics.
+  - La ventana de ayuda tiene que decir a cuántos contactos se avisa, pero el usuario de la sesión no trae los contactos (son privados y solo vienen en `GET /users/me`).
+- **Solución:**
+  - `Ventana` con un portal en el `body` y `stopPropagation` del `pointerdown`; `AccionesSeguridad` (menú, parte y bloqueo) reutilizado en el Expediente (prop `acciones` de `ExpedienteCard`) y en la cabecera del chat; `BotonAyuda` + `AyudaModal`, que pide `GET /users/me` al abrirse.
+  - Servicios y eventos nuevos en `packages/shared`. Tras bloquear, La Orla carga el siguiente Expediente y el chat vuelve a Mis Dates con el Date cerrado fuera de las bandejas.
+  - Probado en el navegador contra la API local (parte, bloqueo desde los dos sitios, ayuda con el aviso simulado en el log), a 1366 px y a 390 px.
