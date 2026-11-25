@@ -11,7 +11,7 @@ import { useApiList } from '../../hooks/useApiList';
 import { useNow } from '../../hooks/useNow';
 import { usePagedList } from '../../hooks/usePagedList';
 import { errorMessage } from '../../utils/api-error';
-import { fechaHora } from '../../utils/tiempo';
+import { fechaHora } from '@studate/shared';
 
 const SIN_FILTROS: GradeFilters = { value: '', user: '' };
 

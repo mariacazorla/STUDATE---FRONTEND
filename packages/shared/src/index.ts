@@ -33,3 +33,4 @@ export * from './theme/tokens';
 // Utilidades
 export * from './utils/query';
 export * from './utils/dates';
+export * from './utils/tiempo';

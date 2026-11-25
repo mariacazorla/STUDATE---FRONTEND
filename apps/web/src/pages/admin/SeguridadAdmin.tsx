@@ -21,7 +21,7 @@ import { useNow } from '../../hooks/useNow';
 import { usePagedList } from '../../hooks/usePagedList';
 import { errorMessage, isAbort } from '../../utils/api-error';
 import { initials, truncate } from '../../utils/format';
-import { fechaHora, haceCuanto } from '../../utils/tiempo';
+import { fechaHora, haceCuanto } from '@studate/shared';
 
 type Pestana = 'alertas' | 'partes';
 

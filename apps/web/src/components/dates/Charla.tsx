@@ -13,7 +13,7 @@ import type { FormEvent } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { errorMessage, isAbort } from '../../utils/api-error';
 import { initials } from '../../utils/format';
-import { empezoEl, etiquetaDia, horaCorta, restanteLargo } from '../../utils/tiempo';
+import { empezoEl, etiquetaDia, horaCorta, restanteLargo } from '@studate/shared';
 import { Icono } from '../Icono';
 import { AccionesSeguridad } from '../seguridad/AccionesSeguridad';
 import { BotonAyuda } from '../seguridad/BotonAyuda';
