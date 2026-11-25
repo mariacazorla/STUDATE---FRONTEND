@@ -4,7 +4,7 @@
    Las piezas que se repiten en todas las pantallas, con el aspecto del blog. Cada una es una
    clase: una pantalla nueva las combina y no escribe estilos propios.
 
-     .btn  .btn2          botón principal y secundario
+     .btn  .btn2          botón principal y secundario (.btn-icono: redondo, solo con icono)
      .card                tarjeta
      .chip                etiqueta redonda
      .av  .ini-av  .ico   foto, iniciales e icono
@@ -78,6 +78,23 @@
 .btn.entero,
 .btn2.entero {
   width: 100%;
+}
+
+/* Botón redondo con solo un icono (cerrar sesión, volver...). El texto va en .solo-lectores */
+.btn-icono {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1.5px solid var(--borde-campo);
+  border-radius: 50%;
+  background: var(--blanco);
+  color: var(--noche);
+}
+
+.btn-icono:hover {
+  background: var(--niebla);
 }
 
 .btn:disabled,
