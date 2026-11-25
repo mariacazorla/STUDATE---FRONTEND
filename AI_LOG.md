@@ -165,3 +165,17 @@ Modelo en el Sprint 2: Claude Fable 5.2.
   - Servicios de `auth`, `users`, `grades`, `dates` y `plans`, que devuelven los listados como `Paginated<T>`. La sesión (el usuario) vive en un store de Nanostores, `$user`.
   - `tokens.ts` con los colores, tipografías, radios, sombras y espacios del blog.
   - Tests con Vitest: 15 del cliente HTTP (token en cada petición, renovar y reintentar, una sola renovación, sesión perdida, web y móvil) y 7 del servicio de autenticación.
+
+### 3. La app del móvil, vacía y con el tema común (`feat/movil-base`)
+
+- **Pregunta:** cómo meter el proyecto de Expo del Seminario 8 de React Native en el monorepo y que arranque con el mismo tema que la web.
+- **Prompt:** el mismo del bloque de estructura (entrada 1). De esta rama es la parte: «Luego el esqueleto del monorepo: la web, el móvil y lo compartido. La web y el móvil tienen que tener el mismo estilo visual, el del blog, así que el tema va en un solo sitio.»
+- **Incoherencias:**
+  - El plan preveía un `metro.config.js` preparado para el monorepo. La documentación de Expo dice que desde el SDK 52 Metro se configura solo en un monorepo, y que una configuración manual antigua hay que quitarla.
+  - `npm install` fallaba: una dependencia indirecta de Expo Router (`@expo-google-fonts/material-symbols`) tiene publicada la versión 0.4.55 sin su fichero, y npm respondía 404.
+  - El proyecto del seminario trae pantallas de autores, libros, permisos y teoría, y dependencias que solo usan esas pantallas.
+- **Solución:**
+  - `apps/movil` con lo mínimo del proyecto del seminario: `app.json`, Expo Router y una pantalla de inicio. Sin `metro.config.js`.
+  - Esa dependencia se fija en los `overrides` de la raíz a la 0.4.49, que es la que usa el proyecto del seminario.
+  - La pantalla de inicio pinta la marca y los colores con `tokens` de `@studate/shared`: ni un color escrito a mano. La URL de la API se lee de `EXPO_PUBLIC_API_URL`.
+  - Comprobado sin teléfono: `expo export` empaqueta la app para web y para Android dentro del monorepo, `expo install --check` da las versiones por buenas y solo hay una copia de React (19.2.3) y de React Native. Queda por verla en un teléfono con Expo Go.
