@@ -316,3 +316,15 @@ Modelo en el Sprint 2: Claude Fable 5.2.
 - **Solución:**
   - `npx expo install expo@^58 --fix` en `apps/movil`; React 19.3.0 en `apps/web`, `apps/movil` y los `overrides` de la raíz (una sola copia de React); `react-native` y `react-native-reanimated` también en los `overrides`.
   - Lint, tipos, tests y build de la web en verde; la app arranca con `expo start --web`. La prueba en el teléfono, con el Expo Go actual, la hace el equipo.
+
+### 14. La foto de perfil en el móvil (`feat/foto-movil`)
+
+- **Pregunta:** cómo poner la foto de perfil desde el teléfono (galería y cámara) sin salirse de Expo Go ni compilar la app.
+- **Prompt:** «Hay cosas que he echado en falta y es lo de la imagen. Eso sí me choca de no tener la imagen, queda un poco mal. ¿Cuánto crees que tardarías en montarlo? Es la única cosa nativa que sí me gustaría dejar hecha desde ya. [...] Si son cinco líneas más, haz también lo de la foto directa, que eso queda bien guapo para la presentación. Procede.»
+- **Incoherencias:**
+  - El plan decía "sin funciones nativas" en el móvil y la pantalla de perfil lo avisaba. Se cambia porque los módulos de imagen vienen dentro de Expo Go: no hace falta un instalable.
+  - La web reduce la foto con un `<canvas>`, que no existe en React Native: se hace con `expo-image-manipulator`, con las mismas medidas (640 px, JPEG al 82 %) para que la foto pese igual venga de donde venga.
+  - El recorte lo hace el sistema (`allowsEditing` con aspecto 1:1); en iOS el aspecto es siempre cuadrado, así que se usa ese también en Android.
+- **Solución:**
+  - `utils/elegir-foto.ts` (permiso, galería o cámara frontal, reducción y base64 con el límite del modelo) y los tres botones en Mi perfil; la foto va en el mismo guardado que el resto del perfil.
+  - Plugin de `expo-image-picker` en `app.json` con los textos de permisos. Probado en el navegador contra una API local; la galería y la cámara reales, en el teléfono.
