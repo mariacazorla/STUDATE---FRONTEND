@@ -1,9 +1,10 @@
 import { orlaService } from '@studate/shared';
 import type { Expediente, GradeValue } from '@studate/shared';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { ExpedienteCard } from '../components/orla/ExpedienteCard';
+import type { ExpedienteCardHandle } from '../components/orla/ExpedienteCard';
 import { Icono } from '../components/Icono';
 import { useToast } from '../context/ToastContext';
 import { errorMessage, isAbort } from '../utils/api-error';
@@ -26,6 +27,9 @@ export function Orla() {
   const [user, setUser] = useState<Expediente | null>(null);
   const [remaining, setRemaining] = useState(0);
   const [votado, setVotado] = useState<Votado | null>(null);
+
+  // La tarjeta: los botones F y A+ le piden que salga volando, igual que deslizar
+  const cardRef = useRef<ExpedienteCardHandle>(null);
 
   // Pide el siguiente Expediente. useCallback: estable para poder usarla en los efectos
   const loadNext = useCallback(async (signal?: AbortSignal) => {
@@ -98,9 +102,9 @@ export function Orla() {
     }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') {
-        handleVote('F');
-      } else if (e.key === 'ArrowRight') {
-        handleVote('A+');
+        cardRef.current?.swipe('F');
+      } else if (e.key === 'ArrowRight' && !sinCupo) {
+        cardRef.current?.swipe('A+');
       } else if (e.key === 'Backspace') {
         e.preventDefault();
         handleUndo();
@@ -149,11 +153,11 @@ export function Orla() {
 
       {estado === 'normal' && user && (
         <div className="orla-centro">
-          <ExpedienteCard key={user._id} user={user} />
+          <ExpedienteCard key={user._id} ref={cardRef} user={user} onVote={handleVote} aPlusDisabled={sinCupo} />
 
           <div className="acciones">
             <span className="voto-et">
-              <button type="button" className="voto f" aria-label="Suspender" onClick={() => handleVote('F')}>
+              <button type="button" className="voto f" aria-label="Suspender" onClick={() => cardRef.current?.swipe('F')}>
                 F
               </button>
               <span>SUSPENSO</span>
@@ -164,7 +168,7 @@ export function Orla() {
             </button>
 
             <span className="voto-et">
-              <button type="button" className="voto a" aria-label="Aprobar" onClick={() => handleVote('A+')} disabled={sinCupo}>
+              <button type="button" className="voto a" aria-label="Aprobar" onClick={() => cardRef.current?.swipe('A+')} disabled={sinCupo}>
                 A+
               </button>
               <span>APROBADO</span>
