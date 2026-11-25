@@ -110,6 +110,10 @@ a:hover {
   font-size: 13.5px;
 }
 
+.centrado {
+  text-align: center;
+}
+
 /* ---------- Maquetación ---------- */
 
 /* El hueco de la pantalla, con su relleno */

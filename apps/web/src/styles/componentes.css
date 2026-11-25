@@ -14,6 +14,7 @@
      .pag                 paginación
      .vacio               cuando no hay nada que enseñar
      .esq                 esqueleto mientras carga
+     .acceso              las pantallas de login y registro: portada y formulario
      .capa  .modal        ventana de confirmación
      .avisos-flotantes    avisos temporales
 
@@ -369,6 +370,79 @@
 @keyframes esq-latido {
   50% {
     opacity: 0.55;
+  }
+}
+
+/* ---------- Acceso (login y registro) ----------
+   Las dos pantallas sin menú: la portada con el lema y, al lado, el formulario.
+   En el móvil la portada va arriba; a partir de 900 px, a la izquierda y a toda la altura. */
+.acceso {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  min-height: 100%;
+}
+
+.acceso .portada {
+  padding: 26px 22px 30px;
+  background: linear-gradient(140deg, var(--azul) 0%, var(--morado) 55%, var(--rosa-boton) 120%);
+  color: var(--blanco);
+}
+
+/* Sobre el fondo de color, el logo cambia a blanco y amarillo */
+.acceso .portada .marca b {
+  color: var(--blanco);
+}
+
+.acceso .portada .marca small {
+  color: var(--maiz);
+}
+
+.acceso .portada .lema {
+  margin: 36px 0 10px;
+  font: 900 34px/1.05 var(--f-display);
+  font-stretch: 125%;
+}
+
+.acceso .portada .lema em {
+  color: var(--maiz);
+  font-style: normal;
+}
+
+.acceso .portada p:not(.lema) {
+  max-width: 34ch;
+  opacity: 0.9;
+}
+
+.acceso .form {
+  display: grid;
+  align-content: start;
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto;
+  padding: var(--esp-xl) 22px var(--esp-xxl);
+}
+
+@media (min-width: 900px) {
+  .acceso {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    grid-template-rows: 1fr;
+  }
+
+  .acceso .portada {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 48px 56px;
+  }
+
+  .acceso .portada .lema {
+    font-size: 62px;
+  }
+
+  .acceso .form {
+    align-content: center;
+    padding: 48px;
   }
 }
 

@@ -4,13 +4,19 @@ import { ArmazonAdmin, ArmazonEstudiante } from './components/Armazon';
 import { Layout } from './components/Layout';
 import { DatesAdmin, OrlaAdmin, SeguridadAdmin, UsuariosAdmin } from './pages/admin';
 import { MiPerfil, MisDates, Orla } from './pages/estudiante';
+import { Login } from './pages/Login';
 import { Muestrario } from './pages/Muestrario';
+import { Registro } from './pages/Registro';
 
 // Rutas de la app (React Router). Cada zona cuelga de su armazón, que pinta el menú y deja un
 // <Outlet /> para la pantalla de cada ruta (nested routing).
 export default function App() {
   return (
     <Routes>
+      {/* Acceso: las dos pantallas sin menú */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/registro" element={<Registro />} />
+
       {/* La app del estudiante */}
       <Route element={<ArmazonEstudiante />}>
         <Route path="/orla" element={<Orla />} />
