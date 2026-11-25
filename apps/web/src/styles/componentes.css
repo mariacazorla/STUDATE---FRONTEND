@@ -903,3 +903,387 @@
   color: var(--blanco);
   font-size: 14px;
 }
+
+/* ==========================================================================================
+   Mis Dates y el chat
+   ========================================================================================== */
+
+/* La pantalla: en el móvil, una columna (la lista o la conversación); en escritorio, las dos */
+.dates {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.lista-col {
+  display: grid;
+  gap: 14px;
+}
+
+/* Con un Date abierto, en el móvil solo se ve la conversación */
+.dates.con-chat .lista-col {
+  display: none;
+}
+
+/* Sin Date abierto, en el móvil la columna del chat (el "elige un Date") no se enseña */
+.dates:not(.con-chat) .chatcol {
+  display: none;
+}
+
+/* Las dos bandejas, como pestañas dentro de una tarjeta blanca */
+.bandejas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid var(--borde);
+  border-radius: var(--r-pastilla);
+  background: var(--blanco);
+}
+
+.bandejas button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 40px;
+  border: 0;
+  border-radius: var(--r-pastilla);
+  background: none;
+  color: var(--noche);
+  font: 700 14px/1 var(--f-text);
+}
+
+.bandejas button .ico {
+  width: 16px;
+  height: 16px;
+}
+
+.bandejas button[aria-pressed='true'] {
+  background: var(--azul);
+  color: var(--blanco);
+}
+
+/* El contador de cada bandeja */
+.bandejas .n {
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: var(--r-pastilla);
+  background: var(--rosa-boton);
+  color: var(--blanco);
+  font: 700 11px/18px var(--f-text);
+}
+
+.bandejas .n.azul {
+  background: var(--noche);
+}
+
+.bandejas button[aria-pressed='true'] .n {
+  background: var(--blanco);
+  color: var(--azul);
+}
+
+/* El aviso de los Dates que esperan que escriba yo */
+.avisador {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--borde-vacio);
+  border-radius: var(--r-tarjeta);
+  background: var(--niebla);
+  font-size: 14px;
+}
+
+.avisador .ico {
+  flex: none;
+  color: var(--rosa-boton);
+}
+
+/* La lista de conversaciones: una tarjeta por Date, que es un botón entero */
+.conv {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.conv .card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: center;
+  width: 100%;
+  padding: 12px;
+  border: 0;
+  text-align: left;
+}
+
+.conv .card.sel {
+  box-shadow:
+    inset 4px 0 0 var(--azul),
+    var(--sombra-tarjeta);
+}
+
+.conv .quien {
+  display: grid;
+  min-width: 0;
+}
+
+.conv .quien b {
+  font: 800 16px/1.2 var(--f-display);
+}
+
+/* La última línea: a quién le toca o cuándo empezó; con puntos suspensivos si no cabe */
+.conv .ult {
+  overflow: hidden;
+  color: var(--gris);
+  font-size: 13.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conv .der {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+  color: var(--gris);
+  font-size: 12.5px;
+}
+
+/* El reloj: cuánto queda para que caduque un Date pendiente */
+.reloj {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--rosa-boton);
+  font: 600 12px/1 var(--f-text);
+}
+
+.reloj .ico {
+  width: 13px;
+  height: 13px;
+}
+
+/* ---------- La conversación ---------- */
+.charla {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: calc(100dvh - 190px);
+  min-height: 420px;
+  overflow: hidden;
+}
+
+.charla-cab {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.charla-cab .quien {
+  min-width: 0;
+}
+
+.charla-cab .quien b {
+  display: block;
+  font: 800 16px/1.2 var(--f-display);
+}
+
+.charla-cab .quien span {
+  display: block;
+  overflow: hidden;
+  color: var(--gris);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Los botones de la cabecera del chat (volver, y en el bloque de seguridad, ayuda y más opciones) */
+.charla-cab .acc {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.icb {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1.5px solid var(--borde-campo);
+  border-radius: var(--r-campo);
+  background: var(--blanco);
+  color: var(--noche);
+}
+
+.icb.alerta {
+  border-color: var(--ko-suave);
+  color: var(--ko);
+}
+
+/* La franja del estado del Date: el chip de la bandeja, el turno y la prórroga */
+.franja-turno {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  padding: 8px 14px;
+  background: var(--niebla);
+  font-size: 13px;
+}
+
+.franja-turno .btn2 {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+/* Los mensajes: se desplazan ellos, no la página, y los nuevos van abajo */
+.mensajes {
+  display: grid;
+  gap: 8px;
+  align-content: end;
+  padding: 14px;
+  overflow-y: auto;
+  background: var(--fondo);
+}
+
+.mensajes .vacio {
+  align-self: center;
+}
+
+.msg {
+  max-width: 78%;
+  padding: 10px 14px;
+  border: 1px solid var(--linea);
+  border-radius: 18px 18px 18px 6px;
+  background: var(--blanco);
+  font-size: 14.5px;
+  overflow-wrap: anywhere;
+}
+
+.msg small {
+  display: block;
+  margin-top: 2px;
+  color: var(--gris);
+  font-size: 11px;
+  text-align: right;
+}
+
+/* Los míos, a la derecha y en azul */
+.msg.yo {
+  justify-self: end;
+  border: 0;
+  border-radius: 18px 18px 6px 18px;
+  background: var(--azul);
+  color: var(--blanco);
+}
+
+.msg.yo small {
+  color: color-mix(in srgb, var(--blanco) 75%, transparent);
+}
+
+/* El separador de día entre mensajes */
+.dia-sep {
+  justify-self: center;
+  padding: 6px 10px;
+  border: 1px solid var(--linea);
+  border-radius: var(--r-pastilla);
+  background: var(--blanco);
+  color: var(--gris);
+  font: 400 10.5px/1 var(--f-label);
+  letter-spacing: 0.08em;
+}
+
+/* Cargar mensajes anteriores, arriba del todo */
+.mensajes .btn2 {
+  justify-self: center;
+}
+
+/* La caja de escribir */
+.escribir {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--borde);
+  background: var(--blanco);
+}
+
+.escribir input {
+  flex: 1;
+  min-width: 0;
+  height: 46px;
+  padding: 0 16px;
+  border: 1.5px solid var(--borde-campo);
+  border-radius: var(--r-pastilla);
+  font: 400 15px/1 var(--f-text);
+}
+
+.escribir input:disabled {
+  background: var(--esqueleto);
+}
+
+.enviar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--rosa-boton);
+  color: var(--blanco);
+}
+
+.enviar:disabled {
+  background: var(--borde-vacio);
+}
+
+/* Lo que solo se ve en el móvil (el botón de volver) */
+.solo-escritorio {
+  display: none !important;
+}
+
+@media (min-width: 900px) {
+  /* En escritorio, la bandeja y la conversación a la vez */
+  .dates.con-chat,
+  .dates:not(.con-chat) {
+    grid-template-columns: 340px minmax(0, 1fr);
+  }
+
+  .dates.con-chat .lista-col,
+  .dates:not(.con-chat) .chatcol {
+    display: block;
+  }
+
+  .dates .chatcol .vacio {
+    min-height: 420px;
+    place-content: center;
+    justify-items: center;
+  }
+
+  .dates .chatcol .vacio .ico {
+    width: 40px;
+    height: 40px;
+    color: var(--rosa-boton);
+  }
+
+  .charla {
+    height: calc(100vh - 56px - 56px);
+    min-height: 560px;
+  }
+
+  .solo-movil {
+    display: none !important;
+  }
+
+  .solo-escritorio {
+    display: block !important;
+  }
+}

@@ -4,7 +4,7 @@ import { ArmazonAdmin, ArmazonEstudiante } from './components/Armazon';
 import { Layout } from './components/Layout';
 import { SoloConSesion, SoloRol, SoloSinSesion } from './components/RutasProtegidas';
 import { DatesAdmin, OrlaAdmin, SeguridadAdmin, UsuariosAdmin } from './pages/admin';
-import { MisDates } from './pages/estudiante';
+import { MisDates } from './pages/MisDates';
 import { MiPerfil } from './pages/MiPerfil';
 import { Orla } from './pages/Orla';
 import { Login } from './pages/Login';
@@ -32,7 +32,9 @@ export default function App() {
         <Route element={<SoloRol role="user" />}>
           <Route element={<ArmazonEstudiante />}>
             <Route path="/orla" element={<Orla />} />
+            {/* Mis Dates: la lista y, con un id, la conversación de ese Date */}
             <Route path="/dates" element={<MisDates />} />
+            <Route path="/dates/:dateId" element={<MisDates />} />
             <Route path="/perfil" element={<MiPerfil />} />
           </Route>
         </Route>
