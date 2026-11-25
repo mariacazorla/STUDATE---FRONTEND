@@ -1,4 +1,4 @@
-import { configureHttp } from '@studate/shared';
+import { authService, configureHttp } from '@studate/shared';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -19,14 +19,21 @@ aplicarTema();
 // y acepte la cookie HttpOnly del refresh token (JavaScript nunca llega a verla).
 configureHttp({ apiUrl: environment.apiUrl, credentials: 'include' });
 
-// Punto de entrada (CSR): el index.html solo trae <div id="root"></div> y React pinta la app ahí.
-// Los "providers" envuelven la app: BrowserRouter da las rutas y ToastProvider el contexto global.
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <BrowserRouter>
-      <ToastProvider>
-        <App />
-      </ToastProvider>
-    </BrowserRouter>
-  </StrictMode>,
-);
+// Antes de pintar se recupera la sesión. El access token solo vive en memoria y al recargar la
+// página se ha perdido: restoreSession() pide uno nuevo con la cookie y después el usuario. Si no
+// hay cookie o ha caducado, no pasa nada: se pinta igual, sin usuario, y las rutas llevan al login.
+// Se espera a que termine para que la primera pantalla ya sea la buena (en Angular era el
+// provideAppInitializer): si se pintara antes, quien recarga vería un momento el login.
+authService.restoreSession().then(() => {
+  // Punto de entrada (CSR): el index.html solo trae <div id="root"></div> y React pinta la app ahí.
+  // Los "providers" envuelven la app: BrowserRouter da las rutas y ToastProvider el contexto global.
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <BrowserRouter>
+        <ToastProvider>
+          <App />
+        </ToastProvider>
+      </BrowserRouter>
+    </StrictMode>,
+  );
+});

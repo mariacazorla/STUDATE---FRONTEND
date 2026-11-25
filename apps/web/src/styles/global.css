@@ -377,8 +377,9 @@ a:hover {
     min-width: 0;
   }
 
-  .lateral .yo b,
-  .lateral .yo span {
+  /* El nombre y el correo se cortan con puntos suspensivos si no caben */
+  .lateral .yo div b,
+  .lateral .yo div span {
     display: block;
     overflow: hidden;
     text-overflow: ellipsis;
