@@ -31,6 +31,14 @@
         }
       ],
       "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Studate usa tus fotos para poner tu foto de perfil.",
+          "cameraPermission": "Studate usa la cámara para hacerte la foto de perfil.",
+          "microphonePermission": false
+        }
+      ],
       "expo-font",
       "expo-status-bar"
     ],

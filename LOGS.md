@@ -650,3 +650,17 @@ La bitácora del Seminario 7, de donde viene este código, se conserva en el tag
   en 0.88 es un componente de función (`ComponentRef<typeof ScrollView>`).
 - Validación ejecutada: `npm run lint`, `npm run typecheck` (web, móvil y shared), `npm test` y `npm run build` de la web en verde; la app arranca
   con `expo start --web` y pinta el login (desde el navegador no puede entrar al servidor por CORS, que es lo esperado: el teléfono no pasa por CORS).
+
+### 2026-11-25 · La foto de perfil en el móvil (`feat/foto-movil`)
+
+- Al probar la app en el teléfono, no poder poner la foto quedaba pobre para la demo. El plan decía "sin funciones nativas", pero
+  `expo-image-picker` y `expo-image-manipulator` vienen dentro de Expo Go, así que la galería y la cámara se pueden usar sin compilar
+  nada: es la única función nativa de la app.
+- `utils/elegir-foto.ts` es el `image-to-data-url.ts` de la web con los módulos de Expo: abre la galería o la cámara frontal con recorte
+  cuadrado, reduce a 640 px de lado, saca un JPEG al 82 % en base64 y comprueba que no pasa de los 200 000 caracteres del modelo. Mi perfil
+  tiene "Galería", "Hacer foto" y "Quitar foto"; la foto va en el mismo `PUT /users/me` al guardar, como en la web.
+- `app.json`: el plugin de `expo-image-picker` con los textos de los permisos de fotos y cámara (solo cuentan cuando haya instalable; en
+  Expo Go los permisos son los de Expo Go).
+- Validación ejecutada: tipos y lint en verde; en el navegador (`expo start --web` contra una API local) se eligió un PNG de 1024 px y 800 KB
+  y quedó un JPEG de 640 px y 33 KB, se guardó, aparecía tras recargar y "Quitar foto" volvió a las iniciales. La galería y la cámara reales
+  se prueban en el teléfono.

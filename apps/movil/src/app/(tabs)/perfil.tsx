@@ -8,13 +8,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar, Boton, Campo, Tarjeta } from '@/components/ui';
 import { estilos } from '@/theme/estilos';
+import { elegirFoto } from '@/utils/elegir-foto';
+import type { OrigenFoto } from '@/utils/elegir-foto';
 
 const CONTACTO_VACIO: TrustedContact = { name: '', email: '', phone: '' };
 
 // Mi perfil en el móvil: el estudiante edita su Expediente (nombre, fecha de nacimiento, titulación,
-// qué busca y bio) y sus contactos de confianza (opcionales, hasta 3), y cierra sesión. Sin foto: cambiarla
-// necesita la galería del teléfono (una función nativa) y este sprint la app va sin funciones nativas; la
-// foto se pone desde la web y aquí se ve
+// qué busca y bio), su foto (de la galería o con la cámara: la única función nativa de la app, porque
+// los dos módulos vienen dentro de Expo Go) y sus contactos de confianza (opcionales, hasta 3), y cierra
+// sesión. La foto se guarda con el resto al pulsar Guardar, como en la web
 export default function Perfil() {
   const user = useStore($user);
   const [name, setName] = useState('');
@@ -53,6 +55,19 @@ export default function Perfil() {
   const cambiarContacto = (i: number, campo: keyof TrustedContact, valor: string) =>
     setContactos((lista) => lista.map((c, j) => (j === i ? { ...c, [campo]: valor } : c)));
 
+  // La foto nueva se ve al momento en el avatar; se envía al guardar. '' quita la foto (como en la web)
+  const cambiarFoto = async (origen: OrigenFoto) => {
+    setError('');
+    try {
+      const dataUrl = await elegirFoto(origen);
+      if (dataUrl) {
+        setPhoto(dataUrl);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se ha podido cambiar la foto');
+    }
+  };
+
   const guardar = async () => {
     setError('');
     if (!name.trim()) {
@@ -73,6 +88,7 @@ export default function Perfil() {
       ...(birthDate ? { birthDate } : {}),
       ...(degree ? { degree } : {}),
       ...(lookingFor.trim() ? { lookingFor: lookingFor.trim() } : {}),
+      ...(photo !== undefined ? { photo } : {}),
       // Solo se envían los contactos con nombre y correo
       trustedContacts: contactos
         .filter((c) => c.name.trim() && c.email.trim())
@@ -110,8 +126,23 @@ export default function Perfil() {
                 <View style={{ flex: 1 }}>
                   <Text style={estilos.t2}>{name || user.name}</Text>
                   <Text style={estilos.sua}>{email}</Text>
-                  <Text style={[estilos.sua, { fontSize: 12 }]}>La foto se cambia desde la web.</Text>
                 </View>
+              </View>
+              <View style={[estilos.fila, { flexWrap: 'wrap' }]}>
+                <Pressable style={styles.accionFoto} onPress={() => cambiarFoto('galeria')}>
+                  <Ionicons name="images-outline" size={18} color={tokens.color.azul} />
+                  <Text style={styles.accionFotoTexto}>Galería</Text>
+                </Pressable>
+                <Pressable style={styles.accionFoto} onPress={() => cambiarFoto('camara')}>
+                  <Ionicons name="camera-outline" size={18} color={tokens.color.azul} />
+                  <Text style={styles.accionFotoTexto}>Hacer foto</Text>
+                </Pressable>
+                {photo ? (
+                  <Pressable style={styles.accionFoto} onPress={() => setPhoto('')}>
+                    <Ionicons name="trash-outline" size={18} color={tokens.color.ko} />
+                    <Text style={[styles.accionFotoTexto, { color: tokens.color.ko }]}>Quitar foto</Text>
+                  </Pressable>
+                ) : null}
               </View>
             </Tarjeta>
 
@@ -187,6 +218,23 @@ const styles = StyleSheet.create({
   },
   pastillaTexto: {
     color: tokens.color.noche,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  // Las acciones de la foto: pastillas con icono, como las de la titulación
+  accionFoto: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: tokens.radius.pastilla,
+    borderWidth: 1.5,
+    borderColor: tokens.color.bordeCampo,
+    backgroundColor: tokens.color.blanco,
+  },
+  accionFotoTexto: {
+    color: tokens.color.azul,
     fontSize: 13,
     fontWeight: '600',
   },
