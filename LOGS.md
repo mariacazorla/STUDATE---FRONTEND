@@ -147,6 +147,10 @@ Lo que backend y frontend tienen que cumplir igual. Si algo de aquí cambia, se 
 - [x] Gesto de deslizar: a la derecha A+ y a la izquierda F, con el ratón y con el dedo · María
 - [x] Aviso de deshacer y pantalla ¡Tenéis Date! · María
 
+#### Mi perfil (`feat/perfil-web`)
+
+- [x] Pantalla Mi perfil: foto, datos, contactos de confianza (opcionales) y cerrar sesión · Miguel Ángel
+
 ## Bitácora
 
 La bitácora del Seminario 7, de donde viene este código, se conserva en el tag `seminari7-base`
@@ -410,3 +414,16 @@ La bitácora del Seminario 7, de donde viene este código, se conserva en el tag
   con cada A+; sin errores en consola; a 1366 px y a 390 px. El gesto físico de arrastrar queda por mirar a mano en el navegador (su lógica, el
   umbral, está en el test).
 - Prompt de IA usado: el del bloque "3 · La Orla" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).
+
+### 2026-11-25 · Sprint 2: Mi perfil en la web (`feat/perfil-web`)
+
+- `pages/MiPerfil.tsx`: al entrar se rellena con `GET /users/me` (nombre, fecha de nacimiento, titulación, "qué busco", bio, foto y contactos) y se
+  guarda con `PUT /users/me` (`userService.updateMe`, nuevo en `packages/shared`). El email se enseña pero no se edita; el rol ni aparece.
+- La foto: el fichero se reduce en el navegador (`utils/image-to-data-url.ts`, un `<canvas>` a 640 px y JPEG al 82 %) antes de guardarla en
+  base64, para no pasar de los 200 KB de la API. Se puede quitar (`photo: ''`).
+- Los contactos de confianza se editan en sitio (nombre, correo y teléfono opcional), hasta 3, con un vacío que explica que son opcionales. Solo se
+  envían los que tienen nombre y correo. Al guardar, `refreshMe` (nuevo en el store de la sesión) refresca la copia en memoria para que el menú
+  enseñe el nombre y la foto nuevos.
+- Validación ejecutada: `npm run lint`, `npm run typecheck`, `npm run build` y `npm test` en verde. En el navegador contra la API local: Laia ve
+  su perfil con sus 2 contactos; cambia la bio y "qué busco", guarda, y al recargar los cambios siguen; sin errores en consola; a 1366 px y a 390 px.
+- Prompt de IA usado: el del bloque "4 · Mi perfil" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).

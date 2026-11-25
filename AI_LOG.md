@@ -226,3 +226,16 @@ Modelo en el Sprint 2: Claude Fable 5.2.
   - El gesto en `ExpedienteCard` con Pointer Events (ratón y dedo) y un helper `voteFromDrag` con el umbral, con su test. Los botones y las flechas reutilizan la misma animación de "salir volando". Respeta `prefers-reduced-motion`.
   - El aviso de deshacer con cuenta atrás (`UndoToast`) y la pantalla ¡Tenéis Date! (`MatchScreen`). Todo el CSS con las variables del tema, copiando la plantilla.
   - Probado en el navegador contra la API local (votar, ¡Date!, deshacer, cupo, teclado) a 1366 px y a 390 px; el arrastre físico queda por mirar a mano.
+
+### 7. Mi perfil en la web (`feat/perfil-web`)
+
+- **Pregunta:** cómo hacer la pantalla de Mi perfil (Expediente, foto y contactos de confianza opcionales) con el CSS global.
+- **Prompt:** «Según la planificación establecida previamente, vamos a proceder de esta forma. Ahora Mi perfil (bloque 4 del plan, de la 26 a la 28). Es lo mismo que en cualquier web que tiene un "mi perfil": tu zona de ajustes, pero personales. El estudiante edita su Expediente y su foto, pero no puede cambiarse el rol. [...] Aquí van también los contactos de confianza, y tienen que ser opcionales: no hay que obligar a nadie a ponerlos. Mismo estilo visual y mismo CSS global que el resto. Primero el backend y después la web. Dime el plan de acción.»
+- **Incoherencias:**
+  - Una foto de móvil pesa varios MB y la API admite 200 KB en base64: hay que reducirla en el navegador antes de enviarla.
+  - Joi no acepta cadenas vacías en la fecha, la titulación ni "qué busco", pero el formulario las tiene vacías cuando no hay dato: solo se envían si tienen valor (la bio sí puede ir vacía).
+  - Las pantallas no deben cambiar la sesión, pero al guardar el perfil el menú tiene que enseñar el nombre y la foto nuevos.
+- **Solución:**
+  - `imageToDataUrl` reduce la foto con un `<canvas>`; `useForm` para los campos de texto y un estado aparte para la foto y la lista de contactos (hasta 3, editados en sitio).
+  - `refreshMe` en el store de la sesión, documentado como la única excepción: refresca la copia del propio usuario.
+  - Probado en el navegador: guardar y recargar conserva los cambios; a 1366 px y a 390 px.

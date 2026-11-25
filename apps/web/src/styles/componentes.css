@@ -839,6 +839,49 @@
   }
 }
 
+/* ==========================================================================================
+   Mi perfil
+   ========================================================================================== */
+
+/* La cabecera del perfil: la foto grande y, al lado, los botones para cambiarla */
+.perfil-cab {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--esp-lg);
+}
+
+.foto-p {
+  flex: none;
+  width: 96px;
+  height: 96px;
+  border: 3px solid var(--blanco);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--linea);
+  object-fit: cover;
+}
+
+.foto-p-sin {
+  display: grid;
+  place-items: center;
+  background: var(--azul-suave);
+  color: var(--azul);
+  font: 900 30px/1 var(--f-display);
+}
+
+/* Cada contacto de confianza: una tarjeta pequeña con sus tres campos y el botón de quitar */
+.contacto {
+  display: grid;
+  gap: var(--esp-md);
+  padding: var(--esp-lg);
+  box-shadow: none;
+}
+
+/* Los botones dentro de una rejilla no se estiran a todo el ancho */
+.contacto .btn2 {
+  justify-self: start;
+}
+
 /* ---------- Avisos temporales (Context API) ---------- */
 .avisos-flotantes {
   position: fixed;

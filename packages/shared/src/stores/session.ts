@@ -14,3 +14,7 @@ export const $user = atom<User | null>(null);
 // computed: se recalculan solos cada vez que cambia el usuario
 export const $isLoggedIn = computed($user, (user) => user !== null);
 export const $isAdmin = computed($user, (user) => user?.role === 'admin');
+
+// La única excepción a "las pantallas no cambian la sesión": cuando el propio usuario guarda su perfil
+// (Mi perfil), la copia en memoria se refresca para que el menú enseñe el nombre y la foto nuevos
+export const refreshMe = (user: User) => $user.set(user);

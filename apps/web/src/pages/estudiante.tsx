@@ -12,11 +12,3 @@ export function MisDates() {
   );
 }
 
-export function MiPerfil() {
-  return (
-    <PantallaVacia
-      titulo="Mi perfil"
-      texto="Aquí podrás editar tu Expediente, tu foto y tus contactos de confianza."
-    />
-  );
-}
