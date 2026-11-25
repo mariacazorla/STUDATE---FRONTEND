@@ -198,3 +198,17 @@ Modelo en el Sprint 2: Claude Fable 5.2.
   - `main.tsx` espera a `restoreSession()` antes de pintar. `SoloConSesion`, `SoloRol` y `SoloSinSesion` hacen de guards y leen el usuario del store, así que reaccionan solas al cerrar o perder la sesión.
   - Las rejillas usan `minmax(0, 1fr)` y la regla del menú lateral se limita al nombre y al correo.
   - 18 tests en la web (12 de las rutas según el rol) y la comprobación en el navegador contra la API local, a 1366 px y a 390 px.
+
+### 5. Primer despliegue en Docker: la imagen de la web (`feat/docker`)
+
+- **Pregunta:** cómo servir la web compilada con nginx dentro de Docker, con las rutas de la SPA y el proxy a la API, a partir del Seminario 10.
+- **Prompt:** «Según la planificación establecida previamente, vamos a proceder de esta forma. Con la estructura hecha y el login funcionando, toca el primer despliegue en Docker (bloque 2 del plan, de la 16 a la 19). Lo hacemos ya, con poco dentro, para ver si hay problemas con el servidor y no dejarlo para el final. Se hace como en el Seminario 10: te paso los repos del seminario y los datos del servidor. La conexión tiene que ir por HTTPS. [...] Hace falta el Dockerfile de la API, el de la web servida con nginx y el docker compose con MongoDB, la API y la web en el repo de despliegue. Primero que funcione en local y después en el servidor, y al final probar desde fuera que se puede iniciar sesión. Dime el plan de acción.» Después del análisis del Seminario 10: «Continúa con la parte local» mientras se consiguen los datos del servidor.
+- **Incoherencias:**
+  - El frontend del Seminario 10 usa nginx con la configuración por defecto, y su propio README avisa de que recargar una ruta interna da 404.
+  - En el seminario la URL de la API va compilada dentro de la imagen (`http://localhost:1337`): cambiar de servidor obliga a tocar el código y reconstruir.
+  - La web importa `packages/shared`, así que su `Dockerfile` no puede construirse desde `apps/web`: necesita la raíz del monorepo, y sin instalar Expo.
+- **Solución:**
+  - `apps/web/Dockerfile` en dos etapas desde la raíz: `npm ci --workspace` instala solo la web y shared, Vite compila con `VITE_API_URL=/api` y `nginx:1.29-alpine` sirve `dist/`.
+  - `apps/web/nginx.conf`: `try_files` devuelve `index.html` en las rutas de React Router, `/api/` se reenvía a `api:1337` (quitando el prefijo) y `/socket.io/` con las cabeceras de WebSocket; los ficheros con hash llevan caché larga. Al salir todo por el mismo origen no hay CORS y la cookie del refresh vive en `/api/auth`.
+  - `.dockerignore` deja fuera `node_modules`, `apps/movil`, los tests y cualquier `.env`. Un workflow de GitHub Actions pasa lint, tipos, tests y build y publica la imagen en ghcr.io.
+  - Probada con el compose en local: recargar en `/dates` y en `/admin/usuarios` da 200, el login de una estudiante por `/api` entra en La Orla y la sesión se mantiene al recargar.
