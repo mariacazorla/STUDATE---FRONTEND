@@ -48,7 +48,7 @@ JWT está explicado, con su diagrama, en el README de
 | [React Router](https://reactrouter.com/) 7 | web | Rutas |
 | [Nanostores](https://github.com/nanostores/nanostores) | web y shared | Estado global pequeño (la sesión) |
 | [socket.io-client](https://socket.io/docs/v4/client-api/) | shared | El chat de los Dates en tiempo real, con el JWT en el handshake |
-| [Expo](https://expo.dev/) SDK 57 + Expo Router | móvil | React Native para Android e iOS |
+| [Expo](https://expo.dev/) SDK 58 + Expo Router | móvil | React Native 0.88 para Android e iOS (subido de SDK 57 el 25-11, porque Expo Go de la tienda ya es SDK 58) |
 | [expo-secure-store](https://docs.expo.dev/versions/latest/sdk/securestore/) | móvil | El refresh token en el almacén cifrado del teléfono |
 | [Vitest](https://vitest.dev/) | web y shared | Tests |
 | [oxlint](https://oxc.rs/docs/guide/usage/linter) y [Prettier](https://prettier.io/) | raíz | Linter y formato, con una sola configuración para todo |
@@ -58,7 +58,7 @@ forma de programar.
 
 ## Requisitos previos
 
-- [Node.js](https://nodejs.org/) 24 LTS (mínimo 22.13, que es lo que pide Expo SDK 57). Con `nvm`,
+- [Node.js](https://nodejs.org/) 24 LTS (mínimo 22.13, que es lo que pide Expo). Con `nvm`,
   `nvm use` lee la versión del fichero `.nvmrc`.
 - El backend de Studate arrancado, con su MongoDB.
 - Para el móvil: la app [Expo Go](https://expo.dev/go) en el teléfono, en la misma red que el ordenador.
@@ -84,8 +84,8 @@ Para añadir una dependencia a una sola carpeta se indica cuál: `npm install <p
 
 ## Una sola versión de React
 
-React Native solo funciona con la versión exacta de React para la que está hecho (Expo SDK 57 usa
-React 19.2.3), y dos copias de React en el mismo proyecto dan errores al ejecutar. Como en un monorepo
+React Native solo funciona con la versión exacta de React para la que está hecho (Expo SDK 58 usa
+React 19.3.0), y dos copias de React en el mismo proyecto dan errores al ejecutar. Como en un monorepo
 las dependencias se instalan juntas, la web usa esa misma versión, y el `package.json` de la raíz la
 fija con `overrides`. Al subir de SDK de Expo se cambia en los tres sitios a la vez: `apps/web`,
 `apps/movil` y los `overrides` de la raíz.

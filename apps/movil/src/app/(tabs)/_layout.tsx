@@ -43,21 +43,21 @@ export default function TabsLayout() {
         name="orla"
         options={{
           title: 'La Orla',
-          tabBarIcon: ({ color, size }) => <Ionicons name="school-outline" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="school-outline" color={String(color)} size={size} />,
         }}
       />
       <Tabs.Screen
         name="dates"
         options={{
           title: 'Mis Dates',
-          tabBarIcon: ({ color, size }) => <Ionicons name="chatbubble-ellipses-outline" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="chatbubble-ellipses-outline" color={String(color)} size={size} />,
         }}
       />
       <Tabs.Screen
         name="perfil"
         options={{
           title: 'Mi perfil',
-          tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" color={String(color)} size={size} />,
         }}
       />
     </Tabs>
