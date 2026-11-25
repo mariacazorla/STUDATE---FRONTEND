@@ -7,6 +7,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ExpedienteCard } from '@/components/ExpedienteCard';
+import { AccionesSeguridad } from '@/components/Seguridad';
 import type { ExpedienteCardHandle } from '@/components/ExpedienteCard';
 import { Avatar, Boton, Vacio } from '@/components/ui';
 import { estilos } from '@/theme/estilos';
@@ -147,7 +148,25 @@ export default function Orla() {
 
         {estado === 'normal' && user && (
           <View style={{ flex: 1, gap: tokens.space.lg }}>
-            <ExpedienteCard key={user._id} ref={cardRef} user={user} onVote={handleVote} aPlusDisabled={sinCupo} />
+            <ExpedienteCard
+              key={user._id}
+              ref={cardRef}
+              user={user}
+              onVote={handleVote}
+              aPlusDisabled={sinCupo}
+              acciones={
+                // Bloquear o mandar un parte desde el Expediente. Al bloquear, esa persona ya no sale: siguiente
+                <AccionesSeguridad
+                  user={user}
+                  variante="expediente"
+                  onBlocked={() => loadNext()}
+                  onAviso={(texto) => {
+                    setAviso(texto);
+                    setTimeout(() => setAviso(''), 3000);
+                  }}
+                />
+              }
+            />
 
             <View style={styles.acciones}>
               <View style={styles.votoEt}>

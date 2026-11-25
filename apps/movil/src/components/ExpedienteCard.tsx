@@ -1,6 +1,7 @@
 import { tokens } from '@studate/shared';
 import type { Expediente, GradeValue } from '@studate/shared';
 import { forwardRef, useImperativeHandle, useRef } from 'react';
+import type { ReactNode } from 'react';
 import { Animated, Image, PanResponder, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { iniciales } from '@/components/ui';
@@ -19,6 +20,8 @@ interface ExpedienteCardProps {
   onVote: (value: GradeValue) => void;
   // true si ya no quedan A+ hoy: deslizar a la derecha no hace nada
   aPlusDisabled: boolean;
+  // Lo que va en la esquina de la foto: el botón de más opciones (bloquear y mandar un parte)
+  acciones?: ReactNode;
 }
 
 // La edad a partir de la fecha de nacimiento, como en la web
@@ -40,7 +43,7 @@ function edad(birthDate?: string): number | undefined {
 // con una rotación ligera y enseña el sello A+ o F según el lado; al soltar, si se ha pasado del umbral,
 // sale volando y vota; si no, vuelve a su sitio con un muelle
 export const ExpedienteCard = forwardRef<ExpedienteCardHandle, ExpedienteCardProps>(function ExpedienteCard(
-  { user, onVote, aPlusDisabled },
+  { user, onVote, aPlusDisabled, acciones },
   ref,
 ) {
   const { width } = useWindowDimensions();
@@ -118,6 +121,8 @@ export const ExpedienteCard = forwardRef<ExpedienteCardHandle, ExpedienteCardPro
       <Animated.View style={[styles.sello, styles.selloF, { opacity: selloF }]}>
         <Text style={[styles.selloTexto, { color: tokens.color.ko }]}>F</Text>
       </Animated.View>
+
+      {acciones}
 
       <View style={styles.sobre}>
         <Text style={styles.nombre}>

@@ -20,6 +20,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AccionesSeguridad, BotonAyuda } from '@/components/Seguridad';
 import { Avatar, Boton, Chip, Vacio } from '@/components/ui';
 import { useChat, useNow } from '@/hooks/useChat';
 import { estilos } from '@/theme/estilos';
@@ -211,6 +212,19 @@ export default function Chat() {
               </Text>
             )}
           </View>
+          {/* Siempre a un toque: el botón de ayuda y más opciones (bloquear y mandar un parte) */}
+          {otro && (
+            <View style={[estilos.fila, { gap: 6 }]}>
+              {!cerrado && <BotonAyuda dateId={dateId} onAviso={avisar} />}
+              <AccionesSeguridad
+                user={otro}
+                dateId={dateId}
+                variante="chat"
+                onAviso={avisar}
+                onBlocked={() => router.back()}
+              />
+            </View>
+          )}
         </View>
 
         {date && (
