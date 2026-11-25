@@ -54,6 +54,21 @@ const DIBUJOS = {
     </>
   ),
   volver: <path d="M15 5l-7 7 7 7" />,
+  // Seguridad: más opciones (bloquear y reportar), el parte y el bloqueo
+  puntos: (
+    <>
+      <circle cx="5" cy="12" r="1.3" />
+      <circle cx="12" cy="12" r="1.3" />
+      <circle cx="19" cy="12" r="1.3" />
+    </>
+  ),
+  bandera: <path d="M5 21V4M5 4h11l-2 4 2 4H5" />,
+  bloquear: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M5.6 5.6l12.8 12.8" />
+    </>
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type NombreIcono = keyof typeof DIBUJOS;

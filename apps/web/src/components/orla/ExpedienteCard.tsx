@@ -1,6 +1,6 @@
 import type { Expediente, GradeValue } from '@studate/shared';
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
-import type { PointerEvent as ReactPointerEvent } from 'react';
+import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 
 import { edad, initials } from '../../utils/format';
 import { SWIPE_ROTATION, SWIPE_THRESHOLD, prefersReducedMotion, voteFromDrag } from './swipe';
@@ -17,13 +17,15 @@ interface ExpedienteCardProps {
   onVote: (value: GradeValue) => void;
   // true si ya no quedan A+ hoy: deslizar a la derecha no hace nada
   aPlusDisabled: boolean;
+  // Lo que va en la esquina de la foto: el botón de más opciones (bloquear y mandar un parte)
+  acciones?: ReactNode;
 }
 
 // La tarjeta del Expediente, con el gesto de deslizar (Pointer Events: vale para el ratón y para el dedo).
 // La tarjeta sigue al dedo con una rotación ligera y enseña un sello A+ o F según el lado; al soltar, si
 // se ha pasado del umbral, sale volando y vota; si no, vuelve a su sitio. Un arrastre corto no vota.
 export const ExpedienteCard = forwardRef<ExpedienteCardHandle, ExpedienteCardProps>(function ExpedienteCard(
-  { user, onVote, aPlusDisabled },
+  { user, onVote, aPlusDisabled, acciones },
   ref,
 ) {
   // dx: cuánto se ha arrastrado en horizontal. dragging: si el dedo está pulsado. flying: dirección en la
@@ -126,6 +128,8 @@ export const ExpedienteCard = forwardRef<ExpedienteCardHandle, ExpedienteCardPro
         <span className="sello sello-f" style={{ opacity: stampF }} aria-hidden="true">
           <b>F</b>
         </span>
+
+        {acciones}
 
         <div className="sobre">
           <p className="nombre">

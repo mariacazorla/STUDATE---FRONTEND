@@ -9,6 +9,7 @@ import type { ExpedienteCardHandle } from '../components/orla/ExpedienteCard';
 import { Icono } from '../components/Icono';
 import { MatchScreen } from '../components/orla/MatchScreen';
 import { UndoToast } from '../components/orla/UndoToast';
+import { AccionesSeguridad } from '../components/seguridad/AccionesSeguridad';
 import { useToast } from '../context/ToastContext';
 import { errorMessage, isAbort } from '../utils/api-error';
 
@@ -169,7 +170,17 @@ export function Orla() {
 
       {estado === 'normal' && user && (
         <div className="orla-centro">
-          <ExpedienteCard key={user._id} ref={cardRef} user={user} onVote={handleVote} aPlusDisabled={sinCupo} />
+          <ExpedienteCard
+            key={user._id}
+            ref={cardRef}
+            user={user}
+            onVote={handleVote}
+            aPlusDisabled={sinCupo}
+            acciones={
+              // Bloquear o mandar un parte desde el Expediente. Al bloquear, esa persona ya no sale: siguiente
+              <AccionesSeguridad user={user} variante="expediente" onBlocked={() => loadNext()} />
+            }
+          />
 
           <div className="acciones">
             <span className="voto-et">

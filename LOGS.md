@@ -98,13 +98,38 @@ Lo que backend y frontend tienen que cumplir igual. Si algo de aquí cambia, se 
     `chat:error { message }` (`No puedes entrar en este Date`, `Entra en el Date antes de escribir`, `Todavía no es tu turno: empieza la otra persona`,
     `Este Date está cerrado: ya no se puede escribir`, o el mensaje de Joi del texto).
   - Turno: en un Date `pending` solo escribe `firstTurn`; después del primer mensaje escriben los dos. En un Date `closed` se entra a leer, no a escribir.
-- **Modelos del Sprint 2** (ya en la base de datos y en Swagger; sus rutas llegan con cada funcionalidad):
-  - **Message**: `{ _id, date, from, text, readAt?, createdAt }`. `text` de 1 a 1000 caracteres. Llega por el socket y por `GET /dates/:dateId/messages`.
+- **Message**: `{ _id, date, from, text, readAt?, createdAt }`. `text` de 1 a 1000 caracteres. Llega por el socket y por `GET /dates/:dateId/messages`.
+- **Bloqueos** (`/blocks`, solo rol `user`; el que bloquea sale del token. A la persona bloqueada no se le avisa y no hay ruta con la que pueda saberlo):
   - **Block**: `{ _id, blocker, blocked, createdAt }`. Un solo bloqueo por pareja (blocker, blocked).
-  - **Report**: `{ _id, reporter, reported, date?, reason, text?, status, severity?, resolution?, reviewedBy?, reviewedAt?, createdAt, updatedAt }`. `reason` es `'harassment'`,
-    `'fake_profile'`, `'inappropriate'` u `'other'`; `status`, `'open'`, `'reviewed'` o `'dismissed'`; `severity` (`'low'`, `'medium'` o `'high'`) y `resolution` las pone el admin.
-  - **SafetyAlert**: `{ _id, user, date?, plan?, type, message?, status, attendedBy?, attendedAt?, createdAt, updatedAt }`. `type` es `'sos'`; `status`, `'open'`, `'attended'` o
-    `'false_alarm'`.
+  - `GET /blocks` responde `{ blocks }`, los míos, con `blocked` como `{ _id, name, degree?, photo? }`.
+  - `POST /blocks` con `{ blocked }` responde 201 `{ block, date }`: `date` es el Date que tenían los dos y se ha cerrado (`closedReason: 'blocked'`, `history`
+    con `by` quien bloqueó y `reason: 'Bloqueo'`; su sala recibe `date:updated`), o `null` si no había. 422 si es uno mismo, 404 si no existe o no es
+    estudiante, 409 si ya estaba bloqueado (`{ message: 'Ya tienes bloqueada a esta persona' }`).
+  - `DELETE /blocks/:userId` responde 204; 404 si no había bloqueo. El Date cerrado no se reabre.
+  - Con un bloqueo en cualquiera de los dos sentidos, ninguno le sale al otro en La Orla ni puede votarlo (403), y el chat del Date está cerrado.
+- **Partes** (`/reports`; mandarlo es del rol `user`, el resto solo `admin`: un estudiante que pida la lista o un parte recibe 403):
+  - **Report**: `{ _id, reporter, reported, date?, reason, text?, status, severity?, resolution?, reviewedBy?, reviewedAt?, createdAt, updatedAt }`. `reporter` y
+    `reported` llegan como `{ _id, name, email, photo? }`, también si están inactivos. `reason` es `'harassment'`, `'fake_profile'`, `'inappropriate'` u
+    `'other'`; `status`, `'open'`, `'reviewed'` o `'dismissed'`; `severity` (`'low'`, `'medium'` o `'high'`) y `resolution` las pone el admin.
+  - `POST /reports` con `{ reported, reason, date?, text? }` responde 201 `{ report }` abierto; 422 si es sobre uno mismo, si `reason` no vale o si `date` no es
+    un Date mío con esa persona (`{ message: 'Ese Date no es tuyo' }`); 404 si `reported` no existe.
+  - `GET /reports?page=&limit=&status=&severity=&reported=` responde `{ reports, total, page, pages }`, primero los más nuevos; 400 si un filtro no vale.
+  - `GET /reports/:reportId` responde `{ report }`; 404 si no existe.
+  - `PUT /reports/:reportId/review` con `{ status: 'reviewed' | 'dismissed', severity?, resolution? }` responde 200 `{ report }` con `reviewedBy` y
+    `reviewedAt`; `status: 'open'` da 422. Se puede volver a revisar (se sobreescriben gravedad, resolución, quién y cuándo).
+- **Botón de ayuda** (`/alerts`; pedir ayuda es del rol `user`, el resto solo `admin`):
+  - **SafetyAlert**: `{ _id, user, date?, plan?, type, message?, status, attendedBy?, attendedAt?, createdAt, updatedAt }`. `user` llega como
+    `{ _id, name, email, photo? }`. `type` es `'sos'`; `status`, `'open'`, `'attended'` o `'false_alarm'`.
+  - `POST /alerts` con `{ date?, plan?, message? }` (todo opcional) responde 201 `{ alert, contactsNotified }`: la alerta abierta y a cuántos contactos de
+    confianza se ha avisado (0 si no tiene: la alerta se crea igual y la ven los admin). 422 si `date` o `plan` no son míos. Los admin conectados reciben
+    la alerta al momento por el socket (`alert:new`); el aviso a los contactos es simulado (una línea en el log del servidor por contacto, como el email
+    de bienvenida).
+  - `GET /alerts?page=&limit=&status=` responde `{ alerts, total, page, pages }`, primero las más nuevas; 400 si el filtro no vale.
+  - `GET /alerts/:alertId` responde `{ alert }`; 404 si no existe.
+  - `PUT /alerts/:alertId/attend` con `{ status: 'attended' | 'false_alarm' }` responde 200 `{ alert }` con `attendedBy` y `attendedAt`; `'open'` da 422.
+    Los demás admin reciben `alert:updated`.
+  - **Socket de los admin**: al conectar, un socket con rol `admin` entra solo en la sala `admins` y recibe `alert:new <SafetyAlert>` y
+    `alert:updated <SafetyAlert>`. Un estudiante nunca los recibe.
 
 ## Tareas
 
@@ -175,6 +200,11 @@ Lo que backend y frontend tienen que cumplir igual. Si algo de aquí cambia, se 
 
 - [x] Mis Dates: bandejas de Pendientes y En curso, con su reloj · Diego
 - [x] Chat en tiempo real con el historial, el turno y la prórroga · Diego
+
+#### Seguridad (`feat/seguridad-web`)
+
+- [x] Bloquear y reportar desde el Expediente y desde el chat · Miguel Ángel
+- [x] Botón de ayuda en el chat · Diego
 
 ## Bitácora
 
@@ -481,3 +511,28 @@ La bitácora del Seminario 7, de donde viene este código, se conserva en el tag
   contesta y su mensaje aparece al instante, y al marcarlo como leído el mensaje de Hugo pasa de ✓ a ✓✓. Sin errores en consola de la app; a 1366 px
   (dos columnas) y a 390 px (lista y conversación por separado, con el botón de volver).
 - Prompt de IA usado: el del bloque "5 · Mis Dates y chat" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).
+
+### 2026-11-25 · Sprint 2: Seguridad en la web (`feat/seguridad-web`)
+
+- Los servicios de seguridad van en `packages/shared` (`blockService`, `reportService`, `safetyAlertService`), con sus modelos ya creados en la
+  estructura, y los eventos `alert:new` y `alert:updated` en el contrato del socket (`chat.model.ts`), para que el móvil y el backoffice los usen igual.
+- **Las ventanas** (`components/Ventana.tsx`): el mismo patrón que `ConfirmModal`, pero con el contenido libre y, por debajo de 640 px, pegada abajo como
+  una hoja, como en la plantilla. Se pinta con un portal en el `body`, porque se abre desde dentro de la tarjeta del Expediente, que tiene un `transform`
+  (y ahí `position: fixed` no funciona). Como los eventos de React suben por el árbol de componentes aunque el DOM esté en otro sitio, la ventana corta
+  el `pointerdown` para que la tarjeta no capture el puntero y se quede con el clic (fue el primer fallo al probarla).
+- **Bloquear y mandar un parte** (`components/seguridad/`): el botón de los tres puntos (`AccionesSeguridad`) está en la esquina del Expediente de La
+  Orla y en la cabecera del chat, siempre a un toque. Abre un menú con las dos acciones. `ReportarModal`: el motivo (obligatorio, con los cuatro de la
+  API), un comentario opcional y el atajo a bloquear; desde el chat manda también el Date. `BloquearModal` explica lo que pasa y pide confirmación en
+  rojo; si ya estaba bloqueado (409) lo dice y no es un error. Al bloquear desde La Orla se carga el siguiente Expediente; desde el chat, el Date cerrado
+  que devuelve la API sustituye al de la lista (desaparece de las bandejas) y se vuelve a Mis Dates.
+- **Botón de ayuda** (`BotonAyuda`, `AyudaModal`): el escudo rojo de la cabecera del chat (no sale en un Date cerrado). La ventana pide los contactos
+  de confianza a `GET /users/me` al abrirse para decir a cuántos se avisará (o, sin contactos, que se avisa igualmente al equipo y que se pueden añadir
+  en Mi perfil), un mensaje opcional, el recordatorio del 112 y el botón en rojo. Al enviar, un toast dice a quién se ha avisado. Si falla, se puede
+  volver a enviar sin cerrar la ventana.
+- CSS nuevo en `componentes.css`: `.ventana`, `.t-ventana`, `.opciones`, `.urg`, `.botonera`, `.exp .mas` y `.et.peligro`, con las variables del tema.
+- Validación ejecutada: `npm run lint`, `npm run typecheck`, `npm run build` y `npm test` en verde. En el navegador contra la API local: Laia abre el menú
+  del Expediente, manda un parte (sin motivo avisa; con "Acoso o insultos" y un comentario, toast de enviado) y bloquea a Usuario (toast y el siguiente
+  Expediente); Hugo, en el chat con Júlia (campo desactivado con "Empieza Júlia…"), la bloquea desde los tres puntos y vuelve a Mis Dates sin Dates;
+  Usuario pulsa el escudo en el chat con Oriol, ve "Avisaremos ahora a tu contacto de confianza y al equipo", escribe un mensaje y pide ayuda: toast
+  de enviado y el aviso simulado al contacto en el log de la API. Sin errores en consola de la app; a 1366 px y a 390 px (la ventana como hoja abajo).
+- Prompt de IA usado: el del bloque "6 · Seguridad" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).

@@ -1287,3 +1287,120 @@
     display: block !important;
   }
 }
+
+/* ==========================================================================================
+   Seguridad: las ventanas de bloquear, mandar un parte y pedir ayuda
+   ========================================================================================== */
+
+/* La ventana: centrada en escritorio y pegada abajo, como una hoja, en el móvil */
+.ventana {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+  max-width: 460px;
+  padding: 20px;
+}
+
+@media (max-width: 639px) {
+  .capa:has(.ventana) {
+    align-items: end;
+    padding: 0;
+  }
+
+  .ventana {
+    max-width: none;
+    padding-bottom: 28px;
+    border-radius: 22px 22px 0 0;
+  }
+}
+
+/* El titular de la ventana */
+.t-ventana {
+  font: 800 22px/1.15 var(--f-display);
+}
+
+/* Las opciones de una ventana: los motivos del parte (radios) o las acciones del menú (botones) */
+.opciones {
+  display: grid;
+  gap: 8px;
+}
+
+.opciones label,
+.opciones .opcion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 12px;
+  border: 1.5px solid var(--borde-campo);
+  border-radius: var(--r-campo);
+  background: var(--blanco);
+  font-size: 14.5px;
+  text-align: left;
+}
+
+.opciones label.sel {
+  border-color: var(--azul);
+  background: var(--azul-suave);
+}
+
+.opciones label input {
+  margin: 0;
+  accent-color: var(--azul);
+}
+
+.opciones .opcion.peligro {
+  border-color: var(--ko-suave);
+  color: var(--ko);
+}
+
+/* El aviso de "si estás en peligro, llama al 112" */
+.urg {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r-campo);
+  background: var(--ko-suave);
+  color: var(--ko-texto);
+  font-size: 13.5px;
+}
+
+.urg b {
+  font-size: 17px;
+}
+
+.urg .ico {
+  flex: none;
+}
+
+/* Los botones de la ventana, a la derecha */
+.botonera {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Un botón con icono dentro */
+.botonera .btn .ico,
+.botonera .btn2 .ico {
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+}
+
+/* El botón de más opciones en la esquina de la foto del Expediente */
+.exp .mas {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  border-color: transparent;
+  background: color-mix(in srgb, var(--blanco) 85%, transparent);
+}
+
+/* La etiqueta de la ventana del botón de ayuda: en rojo, no en rosa, porque es la única acción de peligro */
+.et.peligro {
+  color: var(--ko);
+}
