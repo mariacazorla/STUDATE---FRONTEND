@@ -1,5 +1,6 @@
 import type { StudateDate } from './date.model';
 import type { Message } from './message.model';
+import type { SafetyAlert } from './safety-alert.model';
 
 // El contrato del chat por socket.io: los mismos eventos que tiene el backend en src/sockets/events.ts.
 // Si algo cambia allí, se cambia aquí y lo ven la web y el móvil.
@@ -31,6 +32,13 @@ export interface ServerToClientEvents {
   'date:read': (payload: { dateId: string; by: string; at: string }) => void;
   // Algo no se ha podido hacer: el texto para enseñar
   'chat:error': (payload: { message: string }) => void;
+
+  // ---- Solo los admin (el servidor los mete en su sala al conectar) ----
+
+  // Alguien ha pulsado el botón de ayuda
+  'alert:new': (alert: SafetyAlert) => void;
+  // Un admin ha atendido una alerta
+  'alert:updated': (alert: SafetyAlert) => void;
 }
 
 // El mensaje con el que el servidor rechaza la conexión cuando el access token ha caducado: con este

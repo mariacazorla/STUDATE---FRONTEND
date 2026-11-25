@@ -1399,3 +1399,8 @@
   border-color: transparent;
   background: color-mix(in srgb, var(--blanco) 85%, transparent);
 }
+
+/* La etiqueta de la ventana del botón de ayuda: en rojo, no en rosa, porque es la única acción de peligro */
+.et.peligro {
+  color: var(--ko);
+}

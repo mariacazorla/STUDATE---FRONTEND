@@ -16,6 +16,7 @@ import { initials } from '../../utils/format';
 import { empezoEl, etiquetaDia, horaCorta, restanteLargo } from '../../utils/tiempo';
 import { Icono } from '../Icono';
 import { AccionesSeguridad } from '../seguridad/AccionesSeguridad';
+import { BotonAyuda } from '../seguridad/BotonAyuda';
 import type { EstadoChat } from '../../hooks/useChat';
 
 type EstadoHistorial = 'cargando' | 'normal' | 'error';
@@ -234,8 +235,9 @@ export function Charla({ date, meId, socket, conexion, now, onDateUpdated, onBac
             <b>{otro.name}</b>
             <span>{otro.email}</span>
           </div>
-          {/* Siempre a un toque, como pide el blog: más opciones (bloquear y mandar un parte) */}
+          {/* Siempre a un toque, como pide el blog: el botón de ayuda y más opciones (bloquear y mandar un parte) */}
           <div className="acc">
+            {!cerrado && <BotonAyuda dateId={date._id} />}
             <AccionesSeguridad
               user={otro}
               dateId={date._id}

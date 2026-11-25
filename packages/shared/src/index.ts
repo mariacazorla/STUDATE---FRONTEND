@@ -22,6 +22,7 @@ export * from './services/orla.service';
 export * from './services/chat.service';
 export * from './services/block.service';
 export * from './services/report.service';
+export * from './services/safety-alert.service';
 
 // La sesión (el usuario que ha entrado)
 export * from './stores/session';
