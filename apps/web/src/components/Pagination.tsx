@@ -12,28 +12,29 @@ interface PaginationProps {
 // function Pagination(props: PaginationProps), que es lo que usan el resto de componentes.
 export const Pagination: FC<PaginationProps> = ({ page, totalPages, onPageChange }) => {
   return (
-    <div className="pagination">
-      <button
-        type="button"
-        className="secondary"
-        disabled={page <= 1}
-        onClick={() => onPageChange(page - 1)}
-      >
-        Anterior
-      </button>
-
+    <div className="pag">
       <span>
         Página {page} de {totalPages}
       </span>
 
-      <button
-        type="button"
-        className="secondary"
-        disabled={page >= totalPages}
-        onClick={() => onPageChange(page + 1)}
-      >
-        Siguiente
-      </button>
+      <div className="btns">
+        <button
+          type="button"
+          className="btn2"
+          disabled={page <= 1}
+          onClick={() => onPageChange(page - 1)}
+        >
+          Anterior
+        </button>
+        <button
+          type="button"
+          className="btn2"
+          disabled={page >= totalPages}
+          onClick={() => onPageChange(page + 1)}
+        >
+          Siguiente
+        </button>
+      </div>
     </div>
   );
 };

@@ -40,16 +40,16 @@ export function ConfirmModal({
   }
 
   return (
-    <div className="overlay" onClick={onCancel}>
+    <div className="capa" onClick={onCancel}>
       {/* stopPropagation: un clic dentro del modal no debe cerrarlo */}
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{title}</h2>
-        <p>{message}</p>
-        <div className="actions">
-          <button type="button" className="secondary" onClick={onCancel}>
+      <div className="modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+        <h2 className="t2">{title}</h2>
+        <p className="sua">{message}</p>
+        <div className="acciones">
+          <button type="button" className="btn2" onClick={onCancel}>
             {cancelText}
           </button>
-          <button type="button" className="danger" onClick={onConfirm}>
+          <button type="button" className="btn peligro" onClick={onConfirm}>
             {confirmText}
           </button>
         </div>

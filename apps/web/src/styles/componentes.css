@@ -1,0 +1,410 @@
+/* ==========================================================================================
+   CSS global de Studate (2 de 2): los componentes.
+
+   Las piezas que se repiten en todas las pantallas, con el aspecto del blog. Cada una es una
+   clase: una pantalla nueva las combina y no escribe estilos propios.
+
+     .btn  .btn2          botón principal y secundario
+     .card                tarjeta
+     .chip                etiqueta redonda
+     .av  .ini-av  .ico   foto, iniciales e icono
+     .campo               campo de formulario con su etiqueta, ayuda y error
+     .aviso               mensaje de error o de confirmación
+     .tabla               tabla de un listado
+     .pag                 paginación
+     .vacio               cuando no hay nada que enseñar
+     .esq                 esqueleto mientras carga
+     .capa  .modal        ventana de confirmación
+     .avisos-flotantes    avisos temporales
+
+   Los valores salen todos de las variables del tema (ver global.css).
+   ========================================================================================== */
+
+/* ---------- Botones ---------- */
+
+/* Botón principal: rosa, redondo y con la letra de camiseta. Uno por pantalla, para la acción importante */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--esp-sm);
+  height: 46px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: var(--r-pastilla);
+  background: var(--rosa-boton);
+  box-shadow: var(--sombra-boton);
+  color: var(--blanco);
+  font: 400 14px/1 var(--f-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  text-decoration: none;
+}
+
+/* Botón secundario: blanco con borde, para el resto de acciones */
+.btn2 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--esp-sm);
+  height: 42px;
+  padding: 0 var(--esp-lg);
+  border: 1.5px solid var(--borde-campo);
+  border-radius: var(--r-pastilla);
+  background: var(--blanco);
+  color: var(--noche);
+  font: 600 14px/1 var(--f-text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn2:hover {
+  background: var(--niebla);
+  text-decoration: none;
+}
+
+/* Acción que no se puede deshacer (eliminar, bloquear) */
+.btn.peligro {
+  background: var(--ko);
+  box-shadow: none;
+}
+
+/* Ocupa todo el ancho de su contenedor */
+.btn.entero,
+.btn2.entero {
+  width: 100%;
+}
+
+.btn:disabled,
+.btn2:disabled {
+  opacity: 0.55;
+  box-shadow: none;
+}
+
+/* Al pulsar se encoge un poco, salvo si el usuario ha pedido menos animaciones */
+@media (prefers-reduced-motion: no-preference) {
+  .btn {
+    transition: transform 0.12s ease;
+  }
+
+  .btn:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+}
+
+/* ---------- Tarjeta ---------- */
+.card {
+  border: 1px solid var(--borde);
+  border-radius: var(--r-tarjeta);
+  background: var(--blanco);
+  box-shadow: var(--sombra-tarjeta);
+}
+
+/* Tarjeta con relleno, para cuando dentro solo hay texto o un formulario */
+.card.rellena {
+  padding: var(--esp-xl);
+}
+
+/* ---------- Chip ---------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--r-pastilla);
+  background: var(--niebla);
+  color: var(--rosa-boton);
+  font: 600 12px/1 var(--f-text);
+  white-space: nowrap;
+}
+
+.chip.azul {
+  background: var(--azul-suave);
+  color: var(--azul);
+}
+
+.chip.ok {
+  background: var(--ok-suave);
+  color: var(--ok-texto);
+}
+
+.chip.ko {
+  background: var(--ko-suave);
+  color: var(--ko-texto);
+}
+
+.chip.maiz {
+  background: var(--maiz);
+  color: var(--noche);
+}
+
+/* ---------- Foto, iniciales e icono ---------- */
+
+/* Foto redonda de una persona */
+.av {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--blanco);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--linea);
+  object-fit: cover;
+}
+
+/* Círculo con las iniciales, para quien no tiene foto */
+.ini-av {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--azul-suave);
+  color: var(--azul);
+  font: 700 12px/1 var(--f-text);
+}
+
+/* Icono de línea: coge el color del texto que tiene alrededor */
+.ico {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------- Campo de formulario ---------- */
+.campo {
+  display: grid;
+  gap: 6px;
+  /* Si el campo de al lado es más alto, este no se estira: se queda arriba */
+  align-content: start;
+}
+
+.campo label {
+  font: 600 13px/1.2 var(--f-text);
+}
+
+.campo input,
+.campo select,
+.campo textarea {
+  width: 100%;
+  height: 46px;
+  padding: 0 14px;
+  border: 1.5px solid var(--borde-campo);
+  border-radius: var(--r-campo);
+  background: var(--blanco);
+  color: var(--noche);
+  font: 400 15px/1.2 var(--f-text);
+}
+
+.campo textarea {
+  height: 92px;
+  padding: var(--esp-md) 14px;
+  resize: none;
+}
+
+.campo input:focus-visible,
+.campo select:focus-visible,
+.campo textarea:focus-visible {
+  border-color: var(--azul);
+  outline-offset: 0;
+}
+
+/* Texto de ayuda debajo del campo */
+.campo .ayuda {
+  color: var(--gris);
+  font-size: 12.5px;
+}
+
+/* Campo con error: borde rojo y el motivo debajo */
+.campo.mal input,
+.campo.mal select,
+.campo.mal textarea {
+  border-color: var(--ko);
+}
+
+.campo .error {
+  color: var(--ko);
+  font-size: 12.5px;
+}
+
+/* ---------- Aviso ---------- */
+
+/* Mensaje de error encima de un formulario o de un listado */
+.aviso {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-sm);
+  padding: 10px var(--esp-md);
+  border-radius: var(--r-campo);
+  background: var(--ko-suave);
+  color: var(--ko-texto);
+  font-size: 13.5px;
+}
+
+/* Lo mismo en verde, para confirmar que algo ha ido bien */
+.aviso.ok {
+  background: var(--ok-suave);
+  color: var(--ok-texto);
+}
+
+/* ---------- Tabla ---------- */
+
+/* La tabla va dentro de una tarjeta; si no cabe a lo ancho, se desplaza ella y no la página */
+.tabla-wrap {
+  overflow-x: auto;
+}
+
+/* Si la tabla es lo primero de la tarjeta, sus esquinas de arriba siguen la curva de la tarjeta */
+.card > .tabla-wrap:first-child {
+  border-radius: var(--r-tarjeta) var(--r-tarjeta) 0 0;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tabla th {
+  padding: var(--esp-md);
+  border-bottom: 1px solid var(--linea);
+  background: var(--fondo);
+  color: var(--gris);
+  font: 700 11px/1 var(--f-text);
+  letter-spacing: 0.08em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.tabla td {
+  padding: 10px var(--esp-md);
+  border-bottom: 1px solid var(--borde);
+  vertical-align: middle;
+}
+
+.tabla tr:hover td {
+  background: var(--niebla);
+}
+
+/* ---------- Paginación ---------- */
+.pag {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--esp-sm);
+  padding: var(--esp-md);
+  color: var(--gris);
+  font-size: 13px;
+}
+
+.pag .btns {
+  display: flex;
+  gap: 6px;
+}
+
+/* ---------- Vacío ---------- */
+
+/* Lo que se enseña cuando una lista no tiene nada: explica por qué y qué se puede hacer */
+.vacio {
+  display: grid;
+  justify-items: start;
+  gap: var(--esp-md);
+  padding: 28px 22px;
+  border: 1.5px dashed var(--borde-vacio);
+  border-radius: var(--r-tarjeta);
+  background: var(--blanco);
+}
+
+/* ---------- Esqueleto de carga ---------- */
+
+/* Barras grises con la forma de lo que va a llegar, mientras la API responde */
+.esq {
+  display: block;
+  height: 14px;
+  margin: 10px 0;
+  border-radius: var(--r-pequeno);
+  background: var(--esqueleto);
+}
+
+.esq.alto {
+  height: 220px;
+  border-radius: var(--r-tarjeta);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .esq {
+    animation: esq-latido 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes esq-latido {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* ---------- Ventana de confirmación ---------- */
+
+/* La capa oscura que tapa la pantalla */
+.capa {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: var(--esp-lg);
+  background: color-mix(in srgb, var(--noche) 55%, transparent);
+}
+
+.modal {
+  display: grid;
+  gap: var(--esp-md);
+  width: 100%;
+  max-width: 420px;
+  padding: var(--esp-xl);
+  border-radius: var(--r-tarjeta);
+  background: var(--blanco);
+  box-shadow: var(--sombra-tarjeta);
+}
+
+.modal .acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--esp-sm);
+  margin-top: var(--esp-sm);
+}
+
+/* ---------- Avisos temporales (Context API) ---------- */
+.avisos-flotantes {
+  position: fixed;
+  right: var(--esp-lg);
+  bottom: var(--esp-lg);
+  left: var(--esp-lg);
+  z-index: 1100;
+  display: grid;
+  justify-items: end;
+  gap: var(--esp-sm);
+  pointer-events: none;
+}
+
+.aviso-flotante {
+  padding: var(--esp-md) var(--esp-lg);
+  border-radius: var(--r-campo);
+  background: var(--noche);
+  box-shadow: var(--sombra-tarjeta);
+  color: var(--blanco);
+  font-size: 14px;
+}

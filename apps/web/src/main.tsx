@@ -6,7 +6,13 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { environment } from './config/environment';
 import { ToastProvider } from './context/ToastContext';
-import './index.css';
+import { aplicarTema } from './theme/aplicarTema';
+import './styles/global.css';
+import './styles/componentes.css';
+
+// El tema de @studate/shared se vuelca como variables CSS antes de pintar nada: así el primer
+// render ya sale con los colores y las tipografías de Studate
+aplicarTema();
 
 // El cliente HTTP es compartido con la app del móvil, así que cada app le dice cómo es su
 // plataforma. La web: la dirección de la API y credentials: 'include', para que el navegador envíe

@@ -1,0 +1,180 @@
+/* ==========================================================================================
+   CSS global de Studate (1 de 2): la base.
+
+   En React el CSS normal NO está limitado a un componente, así que todo el estilo de la web vive
+   en dos ficheros: este (base, tipografía y maquetación) y componentes.css (las piezas que se
+   repiten: botón, tarjeta, chip, campo, tabla...).
+
+   REGLA: las pantallas solo maquetan con estas clases. Ninguna pantalla define colores ni
+   tipografías propias. Si a una pantalla le falta algo, se añade aquí o en componentes.css,
+   para que lo pueda usar también la siguiente.
+
+   Todos los colores, radios, sombras y espacios son variables (var(--azul), var(--r-tarjeta)...)
+   que salen de packages/shared/src/theme/tokens.ts: las crea theme/aplicarTema.ts al arrancar.
+   Aquí no se escribe ningún color a mano.
+
+   El salto de móvil a escritorio es a los 900 px (tokens.breakpoint.escritorio). Se escribe
+   primero el móvil y lo de escritorio va dentro de @media (min-width: 900px).
+   ========================================================================================== */
+
+/* ---------- Base ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--noche);
+  font: 400 15px/1.5 var(--f-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+a {
+  color: var(--rosa-boton);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* El foco del teclado se ve siempre igual, en botones, enlaces y campos */
+:focus-visible {
+  outline: 3px solid var(--azul);
+  outline-offset: 2px;
+}
+
+/* ---------- Tipografía ---------- */
+
+/* Titular de pantalla: Anybody, muy negra y ancha (font-stretch usa el eje de anchura de la fuente) */
+.t1 {
+  font: 900 30px/1.02 var(--f-display);
+  font-stretch: 125%;
+  letter-spacing: -0.01em;
+}
+
+/* Titular de sección o de tarjeta */
+.t2 {
+  font: 800 19px/1.2 var(--f-display);
+}
+
+/* Etiqueta pequeña en mayúsculas, con la letra de camiseta universitaria */
+.et {
+  font: 400 11px/1.2 var(--f-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--rosa-boton);
+}
+
+/* Texto secundario, más suave */
+.sua {
+  color: var(--gris);
+  font-size: 13.5px;
+}
+
+/* ---------- Maquetación ---------- */
+
+/* El hueco de la pantalla, con su relleno */
+.cuerpo {
+  min-width: 0;
+  padding: var(--esp-lg);
+}
+
+/* Ancho máximo del contenido, centrado */
+.ancho {
+  max-width: 1060px;
+  margin: 0 auto;
+}
+
+/* Elementos uno debajo de otro, con el mismo hueco */
+/* minmax(0, 1fr): la columna nunca es más ancha que la pantalla, aunque dentro haya algo que no
+   quiera encoger (una tabla, un texto largo sin espacios) */
+.pila {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--esp-lg);
+  align-content: start;
+}
+
+.pila.junta {
+  gap: var(--esp-sm);
+}
+
+/* Elementos en fila, que saltan de línea si no caben */
+.fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--esp-sm) var(--esp-md);
+}
+
+.fila.separada {
+  justify-content: space-between;
+}
+
+/* Rejilla de formulario: una columna en el móvil y dos cuando hay sitio */
+.rejilla {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 700px) {
+  .rejilla.dos {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .cuerpo {
+    padding: 28px var(--esp-xxl);
+  }
+}
+
+/* Texto solo para lectores de pantalla */
+.solo-lectores {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
