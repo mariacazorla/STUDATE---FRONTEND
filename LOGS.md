@@ -222,6 +222,11 @@ Lo que backend y frontend tienen que cumplir igual. Si algo de aquí cambia, se 
 - [x] Mi perfil y seguridad en el móvil · María
 - [x] La app contra la API del servidor por HTTPS y demo con Expo Go (la configuración y la guía; la prueba con datos móviles, al desplegar) · Diego
 
+#### Segundo despliegue y cierre (`feat/documentacion`)
+
+- [x] GitHub Actions: lint, tipos, tests y build en cada push · Diego
+- [x] LOGS y README al día · Miguel Ángel
+
 ## Bitácora
 
 La bitácora del Seminario 7, de donde viene este código, se conserva en el tag `seminari7-base`
@@ -610,3 +615,15 @@ La bitácora del Seminario 7, de donde viene este código, se conserva en el tag
   mensaje llega al momento con el ✓✓ del leído; Mi perfil rellenado con sus datos y sus 2 contactos; el botón de ayuda enseña "Avisaremos ahora a tus
   2 contactos de confianza". Sin errores en consola. Queda por verla en un teléfono con Expo Go (el gesto físico y el almacén cifrado).
 - Prompt de IA usado: el del bloque "8 · La app en el móvil" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).
+
+### 2026-11-25 · Sprint 2: cierre y documentación (`feat/documentacion`)
+
+- **GitHub Actions**: `ci.yml` pasa `npm run lint`, `npm run typecheck` (web, móvil y shared), `npm test` (los tests de la web y del paquete compartido)
+  y `npm run build` en cada push y pull request a `main` y `develop`; si es un push, publica la imagen de la web en ghcr.io. La app del móvil no tiene
+  imagen: solo se comprueban sus tipos.
+- **README y LOGS al día**: el README de la raíz con el stack completo (socket.io-client, expo-secure-store), el de `apps/movil` con cómo arrancarla
+  y contra qué API, y este LOGS con el contrato entero del sprint y las tareas de los nueve bloques. El flujo de arquitectura (web, móvil, nginx, API,
+  socket.io y MongoDB, y el camino de una petición con JWT) está en el README de
+  [STUDATE---DOCKER](https://github.com/mariacazorla/STUDATE---DOCKER); el diagrama de clases, en el de
+  [STUDUDATE---BACKEND](https://github.com/mariacazorla/STUDUDATE---BACKEND).
+- Prompt de IA usado: el del bloque "9 · Segundo despliegue y cierre" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).
