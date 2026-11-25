@@ -304,3 +304,15 @@ Modelo en el Sprint 2: Claude Fable 5.2.
   - La app del móvil no tiene imagen de Docker ni se despliega: en CI solo se comprueban sus tipos.
 - **Solución:**
   - Se revisa el workflow y se apunta qué pasa. README de la raíz y de `apps/movil` repasados; el contrato y las tareas de este LOGS, completos.
+
+### 13. La app del móvil a Expo SDK 58 (`develop`)
+
+- **Pregunta:** por qué Expo Go rechaza el proyecto en el teléfono y cómo dejar la app probable en vivo en Android y en iPhone.
+- **Prompt:** «Project is incompatible with this version of Expo Go (installed SDK 58, project SDK 57). Analiza la situación y dime qué hacemos. [...] Miremos a ver de pasar a SDK 58. Como es solo un cambio de versión de uno, esperemos que no rompa muchas cosas. Si ves que no es tan largo y no es tan complicado, hazlo. Miguel tiene un iPhone y esto hay que probarlo en vivo.»
+- **Incoherencias:**
+  - Expo Go de la tienda solo trae el último SDK (58 desde noviembre de 2026) y el proyecto estaba en el 57 del Seminario 8. En Android se puede instalar un Expo Go antiguo con el APK, pero en iPhone no: la única salida para probar en vivo con todo el equipo es subir el proyecto.
+  - Al subir sin regenerar el lockfile quedaron una copia vieja de React Native y otra de Reanimated anidadas en `node_modules`: se añaden a los `overrides` de la raíz y se vuelve a generar `package-lock.json`.
+  - Dos tipos cambian en React Native 0.88: el `color` que llega al icono de cada pestaña y el `ref` del `ScrollView` del chat (ahora es un componente de función).
+- **Solución:**
+  - `npx expo install expo@^58 --fix` en `apps/movil`; React 19.3.0 en `apps/web`, `apps/movil` y los `overrides` de la raíz (una sola copia de React); `react-native` y `react-native-reanimated` también en los `overrides`.
+  - Lint, tipos, tests y build de la web en verde; la app arranca con `expo start --web`. La prueba en el teléfono, con el Expo Go actual, la hace el equipo.

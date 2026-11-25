@@ -638,3 +638,15 @@ La bitácora del Seminario 7, de donde viene este código, se conserva en el tag
   `docker compose up -d --force-recreate api`, `/api/ping` sigue respondiendo y `/socket.io` da 200 sin reiniciar la web.
 - La web está desplegada en `https://ea3.upc.edu` y probada desde fuera (login, sesión al recargar, chat, backoffice). El proxy de la UPC no deja
   pasar WebSocket, así que socket.io va por polling; funciona igual.
+
+### 2026-11-25 · La app del móvil a Expo SDK 58 (`chore` en `develop`)
+
+- Al probar en un teléfono, Expo Go de la tienda ya era para el SDK 58 y rechazaba el proyecto (SDK 57, el del Seminario 8); en iPhone no se puede
+  instalar un Expo Go antiguo, así que se sube el proyecto: `npx expo install expo@^58 --fix` en `apps/movil`, que deja expo 58.0, expo-router 58,
+  React Native 0.88.1, Reanimated 4.7, Gesture Handler 3.3 y React 19.3.0. Como en el monorepo solo puede haber una copia de React, los
+  `overrides` de la raíz y la web pasan a React 19.3.0 (la web compila y sus tests pasan igual), y se añaden `react-native` y
+  `react-native-reanimated` a los `overrides` para que no quede una copia vieja anidada (pasó al actualizar sin regenerar el lockfile).
+- Dos cambios de tipos en el móvil: el `color` de los iconos de las pestañas (el `ColorValue` de 0.88) y el `ref` del `ScrollView` del chat, que
+  en 0.88 es un componente de función (`ComponentRef<typeof ScrollView>`).
+- Validación ejecutada: `npm run lint`, `npm run typecheck` (web, móvil y shared), `npm test` y `npm run build` de la web en verde; la app arranca
+  con `expo start --web` y pinta el login (desde el navegador no puede entrar al servidor por CORS, que es lo esperado: el teléfono no pasa por CORS).

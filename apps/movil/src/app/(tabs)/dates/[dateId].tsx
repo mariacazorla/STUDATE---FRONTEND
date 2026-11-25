@@ -17,6 +17,7 @@ import {
 import type { Message, StudateDate } from '@studate/shared';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ComponentRef } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -45,7 +46,8 @@ export default function Chat() {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [aviso, setAviso] = useState('');
-  const scrollRef = useRef<ScrollView>(null);
+  // En React Native 0.88 ScrollView es un componente de funcion: el tipo de su ref sale de ComponentRef
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
 
   const avisar = (texto: string) => {
     setAviso(texto);
