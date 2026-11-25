@@ -2,10 +2,6 @@ import { PantallaVacia } from '../../components/PantallaVacia';
 
 // Las pantallas del backoffice que todavía están vacías: cada una pasa a su propio fichero en su tarea
 
-export function OrlaAdmin() {
-  return <PantallaVacia titulo="La Orla" texto="Los votos de La Orla, con sus filtros." />;
-}
-
 export function DatesAdmin() {
   return (
     <PantallaVacia
