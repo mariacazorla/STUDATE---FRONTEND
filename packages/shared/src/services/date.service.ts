@@ -40,11 +40,11 @@ export const dateService = {
       (res) => res.date,
     ),
 
-  /** PUT /dates/:id: cambiar de bandeja */
-  updateStatus: (id: string, status: DateStatus) =>
+  /** PUT /dates/:id: cambiar de bandeja a mano (solo admin). El motivo, si se escribe, queda en el historial */
+  updateStatus: (id: string, status: DateStatus, reason?: string) =>
     request<DateResponse>(`/dates/${id}`, {
       method: 'PUT',
-      body: JSON.stringify({ status }),
+      body: JSON.stringify(reason ? { status, reason } : { status }),
     }).then((res) => res.date),
 
   /** POST /dates/:id/extend: la prórroga, 24 horas más (solo una vez; la segunda, 409) */

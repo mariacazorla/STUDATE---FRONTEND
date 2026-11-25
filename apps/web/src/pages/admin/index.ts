@@ -2,4 +2,5 @@
 export { UsuariosAdmin } from './UsuariosAdmin';
 export { UsuarioForm } from './UsuarioForm';
 export { OrlaAdmin } from './OrlaAdmin';
-export { DatesAdmin, SeguridadAdmin } from './pendientes';
+export { DatesAdmin } from './DatesAdmin';
+export { SeguridadAdmin } from './pendientes';

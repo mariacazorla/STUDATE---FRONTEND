@@ -2,15 +2,6 @@ import { PantallaVacia } from '../../components/PantallaVacia';
 
 // Las pantallas del backoffice que todavía están vacías: cada una pasa a su propio fichero en su tarea
 
-export function DatesAdmin() {
-  return (
-    <PantallaVacia
-      titulo="Dates y Planes"
-      texto="Los Dates con su historial y los Planes del Cambio de Aula."
-    />
-  );
-}
-
 export function SeguridadAdmin() {
   return (
     <PantallaVacia

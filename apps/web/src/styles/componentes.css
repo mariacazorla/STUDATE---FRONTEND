@@ -1625,3 +1625,46 @@
   border-color: var(--ko-suave);
   color: var(--ko);
 }
+
+/* Una lista de datos (etiqueta y valor) en una ventana de detalle */
+.datos {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 14px;
+  margin: 0;
+  font-size: 14px;
+}
+
+.datos dt {
+  color: var(--gris);
+}
+
+.datos dd {
+  margin: 0;
+}
+
+/* El historial de un Date (o las tiradas de un Plan): una línea por entrada, con su chip */
+.historial {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historial li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.historial li .chip {
+  flex: none;
+}
+
+.historial li small {
+  display: block;
+  color: var(--gris);
+  font-size: 12px;
+}
