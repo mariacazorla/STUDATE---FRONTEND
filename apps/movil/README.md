@@ -4,8 +4,9 @@ La app del estudiante para Android e iOS, hecha con [Expo](https://expo.dev/) (R
 Router, a partir del Seminario 8 de React Native. Es lo mismo que la app del estudiante de la web (La
 Orla, Mis Dates con el chat, Mi perfil y la seguridad) con el mismo aspecto, porque el tema (`tokens`),
 los modelos, el cliente HTTP con JWT, los servicios de la API y el socket del chat son los de
-`packages/shared`: la app solo pinta. Sin funciones nativas en este sprint (la foto de perfil se cambia
-desde la web).
+`packages/shared`: la app solo pinta. La única función nativa es la foto de perfil, desde la galería o
+con la cámara (`expo-image-picker` y `expo-image-manipulator`, que vienen dentro de Expo Go): la foto se
+recorta en cuadrado, se reduce a 640 px y se envía en base64, igual que hace la web con un canvas.
 
 El backoffice es solo web: un admin que entra en la app ve un aviso y puede cerrar sesión.
 
