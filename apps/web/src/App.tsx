@@ -3,7 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { ArmazonAdmin, ArmazonEstudiante } from './components/Armazon';
 import { Layout } from './components/Layout';
 import { SoloConSesion, SoloRol, SoloSinSesion } from './components/RutasProtegidas';
-import { DatesAdmin, OrlaAdmin, SeguridadAdmin, UsuariosAdmin } from './pages/admin';
+import { DatesAdmin, OrlaAdmin, SeguridadAdmin, UsuarioForm, UsuariosAdmin } from './pages/admin';
 import { MisDates } from './pages/MisDates';
 import { MiPerfil } from './pages/MiPerfil';
 import { Orla } from './pages/Orla';
@@ -44,6 +44,8 @@ export default function App() {
           <Route path="/admin" element={<ArmazonAdmin />}>
             <Route index element={<Navigate to="/admin/usuarios" replace />} />
             <Route path="usuarios" element={<UsuariosAdmin />} />
+            <Route path="usuarios/nuevo" element={<UsuarioForm />} />
+            <Route path="usuarios/:userId" element={<UsuarioForm />} />
             <Route path="orla" element={<OrlaAdmin />} />
             <Route path="dates" element={<DatesAdmin />} />
             <Route path="seguridad" element={<SeguridadAdmin />} />
