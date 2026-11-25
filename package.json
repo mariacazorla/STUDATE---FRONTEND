@@ -26,6 +26,7 @@
   },
   "overrides": {
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "@expo-google-fonts/material-symbols": "0.4.49"
   }
 }
