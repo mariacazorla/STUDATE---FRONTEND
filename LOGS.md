@@ -137,6 +137,10 @@ Lo que backend y frontend tienen que cumplir igual. Si algo de aquí cambia, se 
 - [x] Login y registro · Miguel Ángel
 - [x] Recuperar la sesión al arrancar y rutas según el rol · Miguel Ángel
 
+#### Primer despliegue en Docker (`feat/docker`)
+
+- [x] Dockerfile de la web: build de Vite servido con nginx, con las rutas de la SPA y el proxy de /api y /socket.io · Miguel Ángel
+
 ## Bitácora
 
 La bitácora del Seminario 7, de donde viene este código, se conserva en el tag `seminari7-base`
@@ -357,3 +361,21 @@ La bitácora del Seminario 7, de donde viene este código, se conserva en el tag
   pantallas se han mirado a 1366 px y a 390 px de ancho, sin desbordes. La app del móvil empaqueta con `expo export` para web y para Android;
   queda por verla en un teléfono con Expo Go.
 - Prompt de IA usado: el del bloque "Estructura" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).
+
+### 2026-11-25 · Sprint 2: la imagen de Docker de la web (`feat/docker`)
+
+- `apps/web/Dockerfile` en dos etapas, construido desde la raíz del monorepo (`docker build -f apps/web/Dockerfile .`): `node:24-alpine`
+  instala solo la web y `packages/shared` (`npm ci --workspace`, sin Expo) y compila con Vite con `VITE_API_URL=/api`; `nginx:1.29-alpine`
+  sirve `dist/` (93 MB en total).
+- `apps/web/nginx.conf` propio, en lugar de la configuración por defecto del Seminario 10: devuelve `index.html` en las rutas de React
+  Router, reenvía `/api/` a `api:1337` quitando el prefijo y `/socket.io/` con las cabeceras de WebSocket (para el chat del bloque 5), y
+  da caché larga a los ficheros con hash. Al salir la web y la API por el mismo origen no hay CORS, la URL de la API compilada es `/api` (vale
+  para cualquier servidor) y la cookie del refresh token vive en `/api/auth`.
+- `.dockerignore` en la raíz: fuera `node_modules`, `dist`, `apps/movil`, los tests, la documentación y cualquier `.env`.
+- Workflow de GitHub Actions (`.github/workflows/ci.yml`): lint, tipos, tests y build de todo el monorepo en cada push y pull request; en los
+  push, además, publica la imagen en ghcr.io (`latest` desde `main` y `develop` desde `develop`).
+- Validación ejecutada: `docker build` sin errores, `nginx -t` correcto y `apiUrl: "/api"` dentro del bundle. Con el `docker compose` del repo
+  STUDATE---DOCKER en local: recargar en `/dates` y en `/admin/usuarios` da 200, `/api/ping` responde a través de nginx, el login de Laia
+  por `/api/auth/login` entra en La Orla y al recargar la sesión se mantiene (`/api/auth/refresh` 200 con la cookie y después `/users/me`),
+  sin ningún error en la consola. El workflow no se ha podido ejecutar todavía: lo hará el primer push.
+- Prompt de IA usado: el del bloque "Primer despliegue en Docker" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).
