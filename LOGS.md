@@ -13,24 +13,31 @@ Las tareas del backend, las de estructura y las de Scrum están en el LOGS.md de
 
 Lo que backend y frontend tienen que cumplir igual. Si algo de aquí cambia, se cambia en los dos LOGS.md.
 
-- **Rutas públicas**: `POST /auth/register` y `POST /auth/login`. `POST /auth/refresh` y `POST /auth/logout` se autentican con la cookie del refresh token. `GET /ping` y la documentación
+- **Rutas públicas**: `POST /auth/register` y `POST /auth/login`. `POST /auth/refresh` y `POST /auth/logout` se autentican con el refresh token (en la cookie o, la app del móvil, en el body). `GET /ping` y la documentación
   (`/api-docs`) también son públicas. Todo lo demás exige token.
 - **Registro**: el cuerpo es `{ name, email, password }` (contraseña de 8 caracteres como mínimo; `role` no se acepta, todo usuario nuevo es `user`). Responde 201 con `{ user }` y **sin token**, 409
   si el email ya existe o 422 si el cuerpo no es válido. El frontend redirige entonces a la página de login.
 - **Login**: el cuerpo es `{ email, password }`. Responde `{ token, user }` o 401. `user` es `{ _id, name, email, role, createdAt, updatedAt }`, sin contraseña. El refresh token **no va en el
-  JSON**: se deja en la cookie `refreshToken` (HttpOnly, SameSite=Strict, Path=/auth, Max-Age de 7 días; Secure en producción).
-- **Refresh**: sin cuerpo. Lee el refresh token de la cookie y responde `{ token }` (un access token nuevo), o 401 si no hay cookie, ha caducado o no es válida. El refresh token no cambia.
-- **Logout**: sin cuerpo. Borra la cookie y responde 204. Después, `/auth/refresh` responde 401.
-- **Cookies y CORS**: el frontend llama a `/auth/*` con `withCredentials: true`; el backend responde con `Access-Control-Allow-Credentials: true` y el origen exacto de `CORS_ORIGIN` (no vale `*`).
+  JSON**: se deja en la cookie `refreshToken` (HttpOnly, SameSite=Strict, Path=/auth, Max-Age de 7 días; Secure en producción). La ruta y el Secure de la cookie se
+  cambian con `REFRESH_COOKIE_PATH` (detrás de nginx, `/api/auth`) y `COOKIE_SECURE`.
+- **Login desde la app del móvil**: la misma ruta con la cabecera `X-Client: movil`. Responde `{ token, refreshToken, user }` y **no pone cookie**: la app guarda el refresh
+  token en el almacén cifrado del teléfono.
+- **Refresh**: la web no manda cuerpo y se lee el refresh token de la cookie; la app del móvil manda `{ refreshToken }` en el cuerpo. Si llegan los dos, se usa el del
+  cuerpo. Responde `{ token }` (un access token nuevo), o 401 si no hay refresh token, ha caducado o no es válido; 422 si `refreshToken` no es un texto. El refresh token no cambia.
+- **Logout**: sin cuerpo. Borra la cookie y responde 204. Después, `/auth/refresh` responde 401. La app del móvil cierra sesión borrando su refresh token.
+- **Cookies y CORS**: la web llama a la API con `credentials: 'include'`; el backend responde con `Access-Control-Allow-Credentials: true` y el origen de la petición si está
+  en la lista de `CORS_ORIGINS` (por defecto `http://localhost:5173` y `http://localhost:8081`; no vale `*`). Las peticiones sin `Origin` (la app del móvil) no pasan por CORS.
+- **Paginación**: todos los listados aceptan `page` y `limit` (de 1 a 100) y, si no se dice `limit`, devuelven **10** elementos por página.
 - **Token**: se envía en la cabecera `Authorization: Bearer <token>`. Su payload lleva los claims `sub` (id del usuario), `role` y `exp`. El access token dura 15 minutos y el refresh token 7 días.
-  El frontend guarda el access token solo en memoria (una signal), nunca en `localStorage` ni `sessionStorage`; al recargar la página lo recupera llamando a `/auth/refresh` y después a `/users/me`.
+  El frontend guarda el access token solo en memoria, nunca en `localStorage` ni `sessionStorage`; al recargar la página lo recupera llamando a `/auth/refresh` y después a `/users/me`.
 - **Errores de autenticación**: 401 si falta el token, ha caducado (`{ message: 'El token ha caducado' }`) o no es válido (`{ message: 'Token no válido' }`); 403 si hay sesión pero no el rol
   necesario.
 - **Usuario con sesión**: `GET /users/me` (con sesión, cualquier rol) responde `{ user: { _id, name, email, role } }`, a partir del token (`req.user`).
 - **Con quién abrir un Date**: `GET /users/directory` (con sesión, cualquier rol) responde `{ users: [{ _id, name, degree?, photo? }] }`: los demás usuarios
   de rol `user` activos, ordenados por nombre.
 - **Usuario**: `{ _id, name, email, role, birthDate?, degree?, lookingFor?, bio?, photo?, active, deleted, deletedAt?, createdAt, updatedAt }`, nunca con
-  contraseña. `photo` es una imagen PNG o JPG en base64 (`data:image/...;base64,...`, 200 000 caracteres como mucho).
+  contraseña. `photo` es una imagen PNG o JPG en base64 (`data:image/...;base64,...`, 200 000 caracteres como mucho). Los contactos de confianza
+  (`trustedContacts`: hasta 3, cada uno `{ name, email, phone? }`) son privados y **no van** en el usuario: ninguna respuesta de hoy los incluye.
 - **Usuarios inactivos y archivados**: no pueden iniciar sesión ni renovar el token (401 con el mensaje de siempre). Lo hace el prehook del modelo.
   Si ya tenían sesión, cualquier petición con su token responde 401 `{ message: 'Tu cuenta no está activa' }` y el frontend cierra la sesión.
 - **Gestión de usuarios** (solo `admin`):
@@ -46,7 +53,7 @@ Lo que backend y frontend tienen que cumplir igual. Si algo de aquí cambia, se 
   - `POST /users/:userId/restore` responde 200 `{ user }`; 404 si no existe o no estaba archivado.
   - `DELETE /users/:userId` (borrado físico) responde 204. Solo con usuarios archivados: si no, 409 `{ message: 'Archiva el usuario antes de eliminarlo' }`.
   - Un admin no puede cambiarse su propio rol, desactivarse, archivarse ni eliminarse: 403 `{ message: 'No puedes hacer esto con tu propio usuario' }`.
-  - Al eliminar un usuario para siempre se borran también sus votos de La Orla y sus Dates.
+  - Al eliminar un usuario para siempre se borran también sus votos de La Orla, sus Dates (con el Plan y los mensajes de cada uno), sus bloqueos, sus partes y sus alertas.
 - **Voto de La Orla (Grade)**: `{ _id, from, to, value, createdAt, updatedAt }`. `from` (quien vota) y `to` (a quien) llegan como
   `{ _id, name, email, photo? }`, también si el usuario está inactivo. `value` es `'A+'` o `'F'`. Un solo voto por pareja (from, to).
 - **Votos de La Orla** (solo `admin`):
@@ -57,9 +64,11 @@ Lo que backend y frontend tienen que cumplir igual. Si algo de aquí cambia, se 
     (`{ message: 'Un usuario no se puede votar a sí mismo' }`) o el cuerpo no vale; 404 si `from` o `to` no existen.
   - `PUT /grades/:gradeId` con `{ value }` responde 200 `{ grade }`. `DELETE /grades/:gradeId` responde 204 (borrado físico).
   - Si al crear un A+ o al cambiar un voto a A+ ya existe el A+ contrario, se abre un Date entre los dos (si no lo había ya).
-- **Date**: `{ _id, users, status, firstTurn, expiresAt, extended, createdAt, updatedAt }`. `users` son los dos usuarios como `{ _id, name, email,
-  photo? }`; `status` es `'pending'` (Pendiente), `'ongoing'` (En curso) o `'closed'` (Cerrado); `firstTurn` es el id del usuario al que le toca
-  escribir primero (sorteado); `expiresAt` es 24 horas después de abrirse; `extended` dice si ya se usó la prórroga. Un solo Date por pareja.
+- **Date**: `{ _id, users, status, firstTurn, expiresAt, extended, startedAt?, closedAt?, closedReason?, history, createdAt, updatedAt }`. `users` son los dos
+  usuarios como `{ _id, name, email, photo? }`; `status` es `'pending'` (Pendiente), `'ongoing'` (En curso) o `'closed'` (Cerrado); `firstTurn` es el id del usuario al que
+  le toca escribir primero (sorteado); `expiresAt` es 24 horas después de abrirse; `extended` dice si ya se usó la prórroga. Un solo Date por pareja.
+  `startedAt` es cuándo pasó a En curso; `closedAt` y `closedReason` (`'expired'`, `'blocked'` o `'admin'`), cuándo y por qué se cerró. `history` es la lista de cambios
+  de estado, `[{ status, by?, reason?, at }]`, del más antiguo al más nuevo; sin `by`, lo hizo el servidor. Todo Date nace con la entrada `pending`.
 - **Dates** (cualquier usuario con sesión; el admin ve todos y un usuario normal solo los suyos):
   - `GET /dates?page=&limit=&status=&user=` responde `{ dates, total, page, pages }`, primero los más nuevos. `user` solo lo usa el admin.
   - `GET /dates/:dateId` responde `{ date }`; 404 si no existe o es de otros.
@@ -68,7 +77,14 @@ Lo que backend y frontend tienen que cumplir igual. Si algo de aquí cambia, se 
   - `PUT /dates/:dateId` con `{ status }` responde 200 `{ date }`; 404 si no existe o es de otros.
   - `POST /dates/:dateId/extend` suma 24 horas a `expiresAt` y pone `extended: true`; 409 si ya se usó
     (`{ message: 'La prórroga de este Date ya se ha usado' }`).
-  - `DELETE /dates/:dateId` (solo admin) responde 204.
+  - `DELETE /dates/:dateId` (solo admin) responde 204. Con el Date se borran su Plan y sus mensajes.
+- **Modelos del Sprint 2** (ya en la base de datos y en Swagger; sus rutas llegan con cada funcionalidad):
+  - **Message**: `{ _id, date, from, text, readAt?, createdAt }`. `text` de 1 a 1000 caracteres.
+  - **Block**: `{ _id, blocker, blocked, createdAt }`. Un solo bloqueo por pareja (blocker, blocked).
+  - **Report**: `{ _id, reporter, reported, date?, reason, text?, status, severity?, resolution?, reviewedBy?, reviewedAt?, createdAt, updatedAt }`. `reason` es `'harassment'`,
+    `'fake_profile'`, `'inappropriate'` u `'other'`; `status`, `'open'`, `'reviewed'` o `'dismissed'`; `severity` (`'low'`, `'medium'` o `'high'`) y `resolution` las pone el admin.
+  - **SafetyAlert**: `{ _id, user, date?, plan?, type, message?, status, attendedBy?, attendedAt?, createdAt, updatedAt }`. `type` es `'sos'`; `status`, `'open'`, `'attended'` o
+    `'false_alarm'`.
 
 ## Tareas
 
@@ -95,6 +111,31 @@ Lo que backend y frontend tienen que cumplir igual. Si algo de aquí cambia, se 
 #### Dates (`dates`)
 
 - [x] Pantallas de Date · María
+
+### Sprint 2
+
+#### Estructura (`feat/estructura`)
+
+- [x] Quitar el Angular: código, configuración, GUIA y EJERCICIO · Miguel Ángel
+- [x] Esqueleto del monorepo: workspaces, .nvmrc, .gitignore, Prettier y oxlint comunes, README y CONTRIBUTING · Miguel Ángel
+
+#### Lo compartido (`feat/shared`)
+
+- [x] Modelos en TypeScript: User, Grade, StudateDate, Plan, Message, Block, Report y SafetyAlert · María
+- [x] Cliente HTTP con JWT: access token en memoria, refresh y reintento tras un 401 · Diego
+- [x] Servicios de la API (auth, users, grades, dates y plans) y los tokens del tema · Diego
+
+#### La app del móvil (`feat/movil-base`)
+
+- [x] apps/movil: el proyecto de Expo del Seminario 8 de React Native, vacío y arrancando con el tema común · María
+
+#### La web (`feat/web-base`)
+
+- [x] apps/web a partir del Seminario 8 de React, con la URL de la API en VITE_API_URL · Miguel Ángel
+- [x] CSS global: los tokens como variables, global.css y componentes.css · María
+- [x] Armazón del estudiante y del backoffice · Miguel Ángel
+- [x] Login y registro · Miguel Ángel
+- [x] Recuperar la sesión al arrancar y rutas según el rol · Miguel Ángel
 
 ## Bitácora
 
@@ -284,3 +325,35 @@ La bitácora del Seminario 7, de donde viene este código, se conserva en el tag
 - Validación ejecutada: `npm run build`, `npm run lint` y `npm test -- --watch=false` en verde (16 ficheros, 60 tests); con la API, el formulario de
   nuevo voto con una pareja repetida enseña el mensaje nuevo.
 - Prompt de IA usado: el README va "al final de cada rama, como continuación"; esta es la del cierre del sprint.
+
+### 2026-11-25 · Sprint 2: la estructura (de Angular a un monorepo en React)
+
+- El backoffice en Angular del Sprint 1 se rehace en React y el repositorio pasa a ser un monorepo con tres carpetas: `apps/web` (React y
+  Vite), `apps/movil` (Expo) y `packages/shared` (lo que no se pinta). El Angular completo se conserva en el tag `angular-sprint1` y en `main`.
+- **`feat/estructura`**: un commit que solo borra el Angular (se quedan el historial, los AI_LOG, este LOGS y el mockup) y otro con el esqueleto:
+  `package.json` raíz con npm workspaces y los comandos comunes, `.nvmrc` con Node 24, y Prettier y oxlint con una sola configuración. React
+  queda fijado a 19.2.3 con `overrides`, porque es la versión exacta que necesita Expo SDK 57 y en un monorepo solo puede haber una copia.
+- **`feat/shared`**: los modelos en TypeScript de los ocho modelos del backend y `Paginated<T>`; el cliente HTTP con JWT (`request()`, con la
+  forma del Seminario 8 y lo que hacía el interceptor de Angular); los servicios de `auth`, `users`, `grades`, `dates` y `plans`; la sesión en
+  un store de Nanostores (`$user`); y `tokens.ts` con el tema. Lo que cambia entre la web y el móvil va en un adaptador que cada app pasa con
+  `configureHttp()`, así que este paquete no importa nada del navegador ni de Expo (lo comprueba una regla del linter).
+- Decisiones del cliente HTTP: ante cualquier 401 de una ruta protegida se renueva el token una vez y se repite la petición, sin depender del
+  texto del mensaje; si varias peticiones fallan a la vez, comparten una sola renovación; si no se puede renovar, se avisa y el store olvida al
+  usuario; y un fallo de red no cierra la sesión.
+- **`feat/movil-base`**: `apps/movil` con lo mínimo del proyecto de Expo del Seminario 8 de React Native, sin `metro.config.js` (desde el SDK 52
+  Expo configura Metro solo en un monorepo). Su pantalla de inicio pinta con `tokens`. Se hizo después de `feat/shared`, y no dentro de
+  `feat/estructura` como decía el plan, porque necesita el tema.
+- **`feat/web-base`**: `apps/web` con la estructura del Seminario 8 de React. El tema se vuelca como variables CSS antes del primer render y
+  todo el estilo está en `global.css` (base, tipografía, maquetación y armazón) y `componentes.css` (botón, tarjeta, chip, campo, aviso, tabla,
+  paginación, vacío, esqueleto, acceso y ventana de confirmación), sin un solo color escrito a mano. `/estilos` enseña todas las piezas.
+  El armazón es un solo componente para el estudiante y el admin; login y registro siguen el diseño acordado; y al arrancar se recupera la
+  sesión antes de pintar. Las rutas protegidas (`SoloConSesion`, `SoloRol` y `SoloSinSesion`) hacen el papel de los guards de Angular.
+- Dos cosas del diseño que no se han hecho porque la API no las tiene: en el registro, la fecha de nacimiento y la titulación (la API solo
+  acepta nombre, correo y contraseña; irán en Mi perfil) y la comprobación del dominio universitario.
+- Validación ejecutada: `npm run lint` sin errores, `npm run typecheck` y `npm run build` en verde, y `npm test` con 40 tests (15 del cliente
+  HTTP, 7 del servicio de autenticación, 12 de las rutas según el rol, 3 del tema y 3 de formato). En el navegador, con la API local y el seed:
+  una contraseña mala enseña el error debajo del campo; Laia (estudiante) entra en La Orla y el admin, en Usuarios; al recargar no se pierde la
+  sesión; el estudiante que abre `/admin` vuelve a `/orla` y el admin que abre `/orla` vuelve a `/admin`; y cerrar sesión lleva al login. Las
+  pantallas se han mirado a 1366 px y a 390 px de ancho, sin desbordes. La app del móvil empaqueta con `expo export` para web y para Android;
+  queda por verla en un teléfono con Expo Go.
+- Prompt de IA usado: el del bloque "Estructura" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).

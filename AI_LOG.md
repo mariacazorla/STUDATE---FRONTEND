@@ -179,3 +179,22 @@ Modelo en el Sprint 2: Claude Fable 5.2.
   - Esa dependencia se fija en los `overrides` de la raíz a la 0.4.49, que es la que usa el proyecto del seminario.
   - La pantalla de inicio pinta la marca y los colores con `tokens` de `@studate/shared`: ni un color escrito a mano. La URL de la API se lee de `EXPO_PUBLIC_API_URL`.
   - Comprobado sin teléfono: `expo export` empaqueta la app para web y para Android dentro del monorepo, `expo install --check` da las versiones por buenas y solo hay una copia de React (19.2.3) y de React Native. Queda por verla en un teléfono con Expo Go.
+
+### 4. La web: base, CSS global, armazón, login y rutas por rol (`feat/web-base`)
+
+- **Pregunta:** cómo montar la web a partir del Seminario 8 de React, con un CSS global que salga del tema, y dejarla entrando con JWT según el rol.
+- **Prompt:** el mismo del bloque de estructura (entrada 1). De esta rama es la parte: «Desde el principio quiero usar bien el CSS global, para ir logrando un estilo unificado y no crear cosas únicas por página. [...] La web se hace a partir del Seminario 8 de React y programando con su mismo estilo; al menos en estos primeros pasos, es básicamente adaptar el Seminario 8 a lo nuestro. Los roles son solo dos: administrador y estudiante.»
+- **Incoherencias:**
+  - El diseño acordado usa "container queries" para pasar de móvil a escritorio, porque dentro del documento cada pantalla va en un marco. En la web real el marco es la ventana.
+  - El hook `useListControls` del seminario busca y pagina en el navegador, y nuestro requisito es paginar en el servidor.
+  - El registro del diseño pide fecha de nacimiento y titulación y comprueba el dominio de la universidad, pero la API solo acepta nombre, correo y contraseña.
+  - Las clases de los componentes del seminario (`.modal`, `.toast`, `.pagination`) venían de su hoja de estilos, que tiene sus propios colores.
+  - En las pruebas en el navegador: una rejilla dejaba que la página se desbordara a lo ancho en el móvil, y una regla del menú lateral cortaba las iniciales del usuario.
+- **Solución:**
+  - `apps/web` con la estructura del seminario (components, context, hooks, utils y config), sin autores, libros ni favoritos y sin `useListControls`. La URL de la API se lee de `VITE_API_URL`.
+  - `aplicarTema()` vuelca los tokens como variables CSS antes del primer render. Todo el estilo vive en `global.css` y `componentes.css`, con `@media (min-width: 900px)` y sin un color escrito a mano. Los componentes del seminario se han pasado a esas clases y `/estilos` las enseña todas.
+  - Un solo componente `Armazon` para el estudiante y el admin: menú lateral en escritorio y, en estrecho, pestañas abajo o fila de secciones. `NavLink` marca la página activa con `aria-current`.
+  - Login y registro con `useForm` y `Field`. El registro pide solo lo que acepta la API; el resto del perfil irá en Mi perfil.
+  - `main.tsx` espera a `restoreSession()` antes de pintar. `SoloConSesion`, `SoloRol` y `SoloSinSesion` hacen de guards y leen el usuario del store, así que reaccionan solas al cerrar o perder la sesión.
+  - Las rejillas usan `minmax(0, 1fr)` y la regla del menú lateral se limita al nombre y al correo.
+  - 18 tests en la web (12 de las rutas según el rol) y la comprobación en el navegador contra la API local, a 1366 px y a 390 px.
