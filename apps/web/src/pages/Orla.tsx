@@ -1,25 +1,31 @@
-import { orlaService } from '@studate/shared';
-import type { Expediente, GradeValue } from '@studate/shared';
+import { useStore } from '@nanostores/react';
+import { $user, orlaService } from '@studate/shared';
+import type { Expediente, GradeValue, StudateDate } from '@studate/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { ExpedienteCard } from '../components/orla/ExpedienteCard';
 import type { ExpedienteCardHandle } from '../components/orla/ExpedienteCard';
 import { Icono } from '../components/Icono';
+import { MatchScreen } from '../components/orla/MatchScreen';
+import { UndoToast } from '../components/orla/UndoToast';
 import { useToast } from '../context/ToastContext';
 import { errorMessage, isAbort } from '../utils/api-error';
 
 type Estado = 'cargando' | 'normal' | 'vacio' | 'error';
 
-// Lo que se acaba de votar, para poder deshacerlo (el botón de deshacer)
+// Lo que se acaba de votar, para poder deshacerlo y para el aviso
 interface Votado {
   gradeId: string;
   user: Expediente;
+  value: GradeValue;
 }
 
 // La Orla: la pantalla principal del estudiante. Va trayendo Expedientes (GET /orla/next) y, con cada
-// voto, carga el siguiente. Se vota con los botones F y A+, y también con las flechas del teclado.
+// voto, carga el siguiente. El A+ mutuo abre el Date (pantalla ¡Date!). Se vota con los botones, con las
+// flechas del teclado y deslizando la tarjeta (el gesto vive en ExpedienteCard).
 export function Orla() {
+  const me = useStore($user);
   const navigate = useNavigate();
   const { showToast } = useToast();
 
@@ -27,6 +33,7 @@ export function Orla() {
   const [user, setUser] = useState<Expediente | null>(null);
   const [remaining, setRemaining] = useState(0);
   const [votado, setVotado] = useState<Votado | null>(null);
+  const [match, setMatch] = useState<StudateDate | null>(null);
 
   // La tarjeta: los botones F y A+ le piden que salga volando, igual que deslizar
   const cardRef = useRef<ExpedienteCardHandle>(null);
@@ -58,18 +65,24 @@ export function Orla() {
     return () => controller.abort();
   }, [loadNext]);
 
+  // Estable para el aviso de deshacer (si no, su cuenta atrás se reiniciaría en cada render del padre)
+  const ocultarAviso = useCallback(() => setVotado(null), []);
+
   const sinCupo = remaining <= 0;
 
-  // Votar: guarda el voto en la API y carga el siguiente Expediente
+  // Votar: la tarjeta ya ha salido volando; aquí se guarda el voto en la API y se carga el siguiente
   const handleVote = async (value: GradeValue) => {
-    if (!user || (value === 'A+' && sinCupo)) {
+    if (!user) {
       return;
     }
     const voted = user;
     try {
       const res = await orlaService.vote(voted._id, value);
       setRemaining(res.remaining);
-      setVotado({ gradeId: res.grade._id, user: voted });
+      setVotado({ gradeId: res.grade._id, user: voted, value });
+      if (res.date) {
+        setMatch(res.date);
+      }
       await loadNext();
     } catch (err) {
       showToast(errorMessage(err));
@@ -77,7 +90,7 @@ export function Orla() {
     }
   };
 
-  // Deshacer: devuelve el Expediente anterior
+  // Deshacer: devuelve el Expediente anterior y, si ese A+ había abierto un Date, lo quita
   const handleUndo = async () => {
     if (!votado) {
       return;
@@ -89,15 +102,18 @@ export function Orla() {
       setRemaining(res.remaining);
       setUser(anterior.user);
       setEstado('normal');
+      if (res.dateRemoved) {
+        setMatch(null);
+      }
     } catch (err) {
       showToast(errorMessage(err));
     }
   };
 
   // Las flechas del teclado: izquierda suspende, derecha aprueba, Retroceso deshace.
-  // Solo cuando se está viendo un Expediente
+  // Solo cuando se está viendo un Expediente y no hay un ¡Date! encima
   useEffect(() => {
-    if (estado !== 'normal') {
+    if (estado !== 'normal' || match) {
       return;
     }
     const onKey = (e: KeyboardEvent) => {
@@ -113,7 +129,7 @@ export function Orla() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [estado, user, votado, sinCupo]);
+  }, [estado, match, sinCupo]);
 
   return (
     <div className="orla">
@@ -183,6 +199,24 @@ export function Orla() {
             </p>
           )}
         </div>
+      )}
+
+      {votado && (
+        <UndoToast
+          key={votado.gradeId}
+          mensaje={`Has ${votado.value === 'A+' ? 'aprobado' : 'suspendido'} a ${votado.user.name.split(' ')[0]}`}
+          onUndo={handleUndo}
+          onExpire={ocultarAviso}
+        />
+      )}
+
+      {match && me && (
+        <MatchScreen
+          date={match}
+          meId={me._id}
+          onGoDates={() => navigate('/dates')}
+          onKeepSwiping={() => setMatch(null)}
+        />
       )}
     </div>
   );
