@@ -18,6 +18,14 @@ export const dateService = {
       { signal },
     ).then((res) => toPaginated(res, 'dates')),
 
+  /** GET /dates para Mis Dates: todos los míos de una vez (la API admite hasta 100 por página; un
+   *  estudiante no llega), primero los más nuevos. El filtro por estado se hace en la pantalla, que
+   *  reparte entre las bandejas */
+  getMyDates: (signal?: AbortSignal) =>
+    request<ApiPage<'dates', StudateDate>>('/dates?limit=100', { signal }).then((res) =>
+      toPaginated(res, 'dates'),
+    ),
+
   /** GET /dates/:id (404 si no existe o es de otros) */
   getDate: (id: string, signal?: AbortSignal) =>
     request<DateResponse>(`/dates/${id}`, { signal }).then((res) => res.date),
