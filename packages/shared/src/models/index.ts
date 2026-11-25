@@ -9,3 +9,4 @@ export * from './message.model';
 export * from './block.model';
 export * from './report.model';
 export * from './safety-alert.model';
+export * from './orla.model';

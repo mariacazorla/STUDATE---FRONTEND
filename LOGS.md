@@ -141,6 +141,12 @@ Lo que backend y frontend tienen que cumplir igual. Si algo de aquí cambia, se 
 
 - [x] Dockerfile de la web: build de Vite servido con nginx, con las rutas de la SPA y el proxy de /api y /socket.io · Miguel Ángel
 
+#### La Orla (`feat/orla-web`)
+
+- [x] Pantalla La Orla: Expediente, botones F/deshacer/A+, cupo del día y flechas del teclado · María
+- [x] Gesto de deslizar: a la derecha A+ y a la izquierda F, con el ratón y con el dedo · María
+- [x] Aviso de deshacer y pantalla ¡Tenéis Date! · María
+
 ## Bitácora
 
 La bitácora del Seminario 7, de donde viene este código, se conserva en el tag `seminari7-base`
@@ -382,3 +388,25 @@ La bitácora del Seminario 7, de donde viene este código, se conserva en el tag
 - Más tarde, en `feat/https`: la configuración de nginx se divide en `apps/web/nginx/default.conf` (el server de http, en la imagen) y
   `apps/web/nginx/studate-app.conf` (las reglas, que incluyen con `include` ese server y el de https del repo de despliegue). Probado con el
   compose por https en local: TLS 1.3, HTTP/2, cookie `Secure` y la sesión se renueva.
+
+### 2026-11-25 · Sprint 2: La Orla en la web (`feat/orla-web`)
+
+- La Orla es la pantalla principal del estudiante, como un Tinder pero de estudiantes. El servicio `orlaService` y sus modelos van en
+  `packages/shared` (`next`, `vote`, `undo`), para que los use también el móvil.
+- **Pantalla** (`pages/Orla.tsx`): la tarjeta del Expediente (foto o iniciales, nombre con la edad, titulación, "qué busca" y bio), los botones
+  F, deshacer y A+, el cupo de A+ de hoy en la cabecera y los estados de cargando (esqueleto), vacío ("ya has visto a todo tu campus") y error.
+  Se vota con los botones y con las flechas del teclado; con el cupo lleno, el botón A+ se desactiva con el aviso de volver mañana.
+- **Gesto de deslizar** (`ExpedienteCard` + `swipe.ts`): con Pointer Events, así que vale igual para el ratón y para el dedo. La tarjeta sigue al
+  gesto con una rotación ligera y un sello A+ o F según el lado; al soltar, si se pasa del umbral (90 px) sale volando y vota, y si no, vuelve a
+  su sitio. Un arrastre corto no vota. Los botones y las flechas reutilizan la misma animación. Respeta `prefers-reduced-motion`.
+- **Aviso de deshacer y ¡Date!** (`UndoToast`, `MatchScreen`): tras votar, un aviso con una cuenta atrás de 10 s; desaparece solo o, al pulsar,
+  devuelve el perfil anterior. Cuando un A+ forma un A+ mutuo, la pantalla ¡Tenéis Date! a pantalla completa con las dos personas, el sorteo del
+  turno y los botones de ir a Mis Dates o seguir en La Orla.
+- Todo el CSS nuevo va en `componentes.css` con las variables del tema, copiando las clases de la plantilla (`.exp`, `.voto`, `.cupo`, `.sello`,
+  `.match`...). Ninguna pantalla define colores propios.
+- Validación ejecutada: `npm run lint`, `npm run typecheck`, `npm run build` y `npm test` en verde (3 tests nuevos del umbral del gesto). En el
+  navegador contra la API local con el seed: Laia ve Expedientes y vota con los botones y con el teclado; aprobar a Nerea (que ya le había dado
+  A+) abre el ¡Date! con el sorteo; votar F enseña el aviso de deshacer con la cuenta atrás; deshacer devuelve el perfil anterior; el cupo baja
+  con cada A+; sin errores en consola; a 1366 px y a 390 px. El gesto físico de arrastrar queda por mirar a mano en el navegador (su lógica, el
+  umbral, está en el test).
+- Prompt de IA usado: el del bloque "3 · La Orla" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).

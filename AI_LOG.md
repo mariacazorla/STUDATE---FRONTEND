@@ -213,3 +213,16 @@ Modelo en el Sprint 2: Claude Fable 5.2.
   - `.dockerignore` deja fuera `node_modules`, `apps/movil`, los tests y cualquier `.env`. Un workflow de GitHub Actions pasa lint, tipos, tests y build y publica la imagen en ghcr.io.
   - Probada con el compose en local: recargar en `/dates` y en `/admin/usuarios` da 200, el login de una estudiante por `/api` entra en La Orla y la sesión se mantiene al recargar.
   - Después, para el HTTPS (`feat/https`): las reglas de nginx pasan a `apps/web/nginx/studate-app.conf`, que el server de http de la imagen (`default.conf`) incluye con `include`, y que el repo de despliegue reutiliza en su server de https. La imagen no cambia con o sin HTTPS.
+
+### 6. La Orla en la web (`feat/orla-web`)
+
+- **Pregunta:** cómo montar la pantalla de La Orla en la web con el estilo del blog, el gesto de deslizar bien depurado y la pantalla de ¡Date!
+- **Prompt:** «Según la planificación establecida previamente, vamos a proceder de esta forma. Ahora la pantalla principal de Studate, La Orla (bloque 3 del plan, de la 20 a la 25). [...] Después la parte visual, con el estilo del blog y el CSS global, y que funcione bien. Hay que debuguear bien el gesto de pasarlo a la derecha y a la izquierda: a la derecha es A+ y a la izquierda F, con el ratón y con el dedo. Dime el plan de acción.»
+- **Incoherencias:**
+  - La plantilla enseña "gustos" (etiquetas de aficiones) que el modelo no tiene. Se adaptó a los datos reales: nombre con la edad (calculada de birthDate), titulación, "qué busca" y bio.
+  - El aviso de deshacer llamaba a un setState del padre dentro del actualizador de estado del contador, y React avisaba de "setState mientras se pinta otro componente". Se arregló calculando el tiempo restante de una hora de fin y avisando al padre fuera del actualizador.
+- **Solución:**
+  - `orlaService` y sus modelos en `packages/shared`. La pantalla `Orla.tsx` con los estados (cargando, normal, vacío, error), los botones, el cupo y las flechas del teclado.
+  - El gesto en `ExpedienteCard` con Pointer Events (ratón y dedo) y un helper `voteFromDrag` con el umbral, con su test. Los botones y las flechas reutilizan la misma animación de "salir volando". Respeta `prefers-reduced-motion`.
+  - El aviso de deshacer con cuenta atrás (`UndoToast`) y la pantalla ¡Tenéis Date! (`MatchScreen`). Todo el CSS con las variables del tema, copiando la plantilla.
+  - Probado en el navegador contra la API local (votar, ¡Date!, deshacer, cupo, teclado) a 1366 px y a 390 px; el arrastre físico queda por mirar a mano.
