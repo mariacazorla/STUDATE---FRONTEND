@@ -24,7 +24,7 @@ STUDATE---FRONTEND/
     web/               React + Vite: la app del estudiante y el backoffice del admin
     movil/             Expo (React Native): la app del estudiante en el móvil
   packages/
-    shared/            Lo que no se pinta: modelos, cliente HTTP con JWT, servicios de la API y tema
+    shared/            Lo que no se pinta: modelos, cliente HTTP con JWT, servicios de la API, el socket del chat y tema
   mockups/             Mockups en HTML de las pantallas
 ```
 
@@ -43,6 +43,7 @@ escribe una sola vez en `packages/shared` y las dos apps lo importan con
 | [Vite](https://vite.dev/) | web | Servidor de desarrollo y build |
 | [React Router](https://reactrouter.com/) 7 | web | Rutas |
 | [Nanostores](https://github.com/nanostores/nanostores) | web y shared | Estado global pequeño (la sesión) |
+| [socket.io-client](https://socket.io/docs/v4/client-api/) | shared | El chat de los Dates en tiempo real, con el JWT en el handshake |
 | [Expo](https://expo.dev/) SDK 57 + Expo Router | móvil | React Native para Android e iOS |
 | [Vitest](https://vitest.dev/) | web y shared | Tests |
 | [oxlint](https://oxc.rs/docs/guide/usage/linter) y [Prettier](https://prettier.io/) | raíz | Linter y formato, con una sola configuración para todo |

@@ -239,3 +239,17 @@ Modelo en el Sprint 2: Claude Fable 5.2.
   - `imageToDataUrl` reduce la foto con un `<canvas>`; `useForm` para los campos de texto y un estado aparte para la foto y la lista de contactos (hasta 3, editados en sitio).
   - `refreshMe` en el store de la sesión, documentado como la única excepción: refresca la copia del propio usuario.
   - Probado en el navegador: guardar y recargar conserva los cambios; a 1366 px y a 390 px.
+
+### 8. Mis Dates y el chat en la web (`feat/chat-web`)
+
+- **Pregunta:** cómo hacer Mis Dates (las bandejas con su reloj) y el chat de cada Date en tiempo real con socket.io, con el JWT en el socket y el CSS global.
+- **Prompt:** «Según la planificación establecida previamente, vamos a proceder de esta forma. Toca montar lo de las citas: Mis Dates y el chat (bloque 5 del plan, de la 29 a la 33). Aquí es donde volvemos a usar socket.io, y como es un chat, tiene que ser en tiempo real. Usa bien JSON Web Token también en el socket: sin token no se conecta nadie. [...] Primero el backend y después la web, con el estilo y el CSS global de siempre. Dime el plan de acción.» Diego pidió que se hicieran todos los bloques seguidos sin parar en cada uno, preguntando solo si surgía algo.
+- **Incoherencias:**
+  - La plantilla enseña en cada tarjeta el último mensaje, pero `GET /dates` no lo trae: se enseña en su lugar a quién le toca (pendientes) o cuándo empezó (en curso), que es lo que necesita el estudiante para decidir dónde entrar.
+  - La plantilla tiene la lista, el chat en curso y el chat "no es tu turno" como tres pantallas; en la web son una sola con dos columnas en escritorio y una en el móvil, y el turno es un estado de la misma conversación.
+  - El socket no cuelga de `/api`: en el servidor la web tiene `VITE_API_URL=/api` y socket.io tiene que ir contra el origen de la página (nginx ya reenvía `/socket.io`). Y el token del handshake tiene que ser el actual en cada reconexión, no el de cuando se abrió.
+  - Los botones de ayuda y de más opciones de la cabecera del chat son del bloque de seguridad: aquí solo queda el hueco.
+- **Solución:**
+  - `chat.service.ts` en `packages/shared` con `connectChat()` (origen deducido de la URL de la API, token con función en `auth`, renovación y reconexión con "El token ha caducado") y el contrato de eventos en `chat.model.ts`. `dateService.getMyDates` y `getMessages` (página 1, los más nuevos).
+  - `MisDates.tsx` con las dos columnas y un solo socket por pantalla (`useChat`); `ListaDates` con bandejas, aviso y reloj (`useNow`); `Charla` con el historial, la sala, el turno, la prórroga, los ✓✓ y los separadores de día. CSS nuevo en `componentes.css` con las variables del tema.
+  - Probado en el navegador contra la API local con Júlia respondiendo desde otro socket; a 1366 px y a 390 px.

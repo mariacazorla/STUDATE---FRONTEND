@@ -72,14 +72,34 @@ Lo que backend y frontend tienen que cumplir igual. Si algo de aquí cambia, se 
 - **Dates** (cualquier usuario con sesión; el admin ve todos y un usuario normal solo los suyos):
   - `GET /dates?page=&limit=&status=&user=` responde `{ dates, total, page, pages }`, primero los más nuevos. `user` solo lo usa el admin.
   - `GET /dates/:dateId` responde `{ date }`; 404 si no existe o es de otros.
-  - `POST /dates` con `{ users: [idA, idB] }` responde 201 `{ date }`; 403 si un usuario normal no es uno de los dos; 409 si ya hay un Date entre
-    ellos (`{ message: 'Ya hay un Date entre estos dos usuarios' }`); 404 si alguno no existe; 422 si no son dos ids distintos.
-  - `PUT /dates/:dateId` con `{ status }` responde 200 `{ date }`; 404 si no existe o es de otros.
-  - `POST /dates/:dateId/extend` suma 24 horas a `expiresAt` y pone `extended: true`; 409 si ya se usó
-    (`{ message: 'La prórroga de este Date ya se ha usado' }`).
+  - `POST /dates` con `{ users: [idA, idB] }` es **solo del admin** (un estudiante recibe 403: sus Dates se abren con el A+ mutuo). Responde 201 `{ date }`
+    con `history: [{ status: 'pending', by: <admin>, reason: 'Abierto por un admin', at }]`; 409 si ya hay un Date entre ellos
+    (`{ message: 'Ya hay un Date entre estos dos usuarios' }`); 404 si alguno no existe; 422 si no son dos ids distintos.
+  - `PUT /dates/:dateId` con `{ status, reason? }` es **solo del admin** (403 si no). Responde 200 `{ date }` y añade al `history` `{ status, by: <admin>,
+    reason?, at }`; al cerrar, `closedAt` es ahora y `closedReason` es `'admin'`; al reabrir se quitan los dos; a `ongoing` rellena `startedAt` si no lo
+    tenía. Si el estado es el que ya tenía, no se apunta nada. 404 si no existe.
+  - `POST /dates/:dateId/extend` (los dos del Date) suma 24 horas a `expiresAt`, pone `extended: true` y añade al `history` `{ status: <el que tenía>, by,
+    reason: 'Prórroga de 24 horas', at }`; 409 si ya se usó (`{ message: 'La prórroga de este Date ya se ha usado' }`) o si el Date está cerrado
+    (`{ message: 'Este Date está cerrado' }`). La sala del chat recibe `date:updated`.
+  - `GET /dates/:dateId/messages?page=&limit=` (los dos del Date y el admin) responde `{ messages, total, page, pages }`: la página 1 son los mensajes
+    **más nuevos** y dentro de cada página van en orden cronológico. 404 si el Date es de otros.
   - `DELETE /dates/:dateId` (solo admin) responde 204. Con el Date se borran su Plan y sus mensajes.
+  - **Estados automáticos**: el primer mensaje del chat pasa el Date a `ongoing` (`startedAt` = hora del mensaje, `history` con `by` quien lo
+    escribió y `reason: 'Primer mensaje'`). Un Date `pending` que llega a `expiresAt` lo cierra el servidor (comprobación cada minuto):
+    `closed`, `closedReason: 'expired'`, `history` sin `by` y `reason: 'Caducado sin mensajes'`. Un Date `ongoing` no caduca.
+- **Chat en tiempo real (socket.io)**: mismo origen y puerto que la API (en el servidor, nginx reenvía `/socket.io/`). El cliente conecta con
+  `io(url, { auth: { token } })`; sin token válido, `connect_error` con el mismo mensaje que daría el 401 de la API (`Falta el token`,
+  `El token ha caducado`, `Token no válido`, `Tu cuenta no está activa`). Con `El token ha caducado` el cliente renueva y reconecta; con los demás
+  cierra la sesión. El token solo se comprueba al conectar. Cada Date es una sala en la que solo entran sus dos usuarios:
+  - cliente → servidor: `date:join { dateId }`, `date:leave { dateId }`, `date:message { dateId, text }` (1 a 1000 caracteres; hay que haber hecho
+    `date:join` antes), `date:read { dateId }`.
+  - servidor → cliente: `date:joined { dateId }`; `date:message <Message>` a los dos de la sala (también a quien lo escribió, ya con `_id` y
+    `createdAt`); `date:updated <Date>` cuando el Date cambia (primer mensaje, caducidad, prórroga, cambio del admin); `date:read { dateId, by, at }`;
+    `chat:error { message }` (`No puedes entrar en este Date`, `Entra en el Date antes de escribir`, `Todavía no es tu turno: empieza la otra persona`,
+    `Este Date está cerrado: ya no se puede escribir`, o el mensaje de Joi del texto).
+  - Turno: en un Date `pending` solo escribe `firstTurn`; después del primer mensaje escriben los dos. En un Date `closed` se entra a leer, no a escribir.
 - **Modelos del Sprint 2** (ya en la base de datos y en Swagger; sus rutas llegan con cada funcionalidad):
-  - **Message**: `{ _id, date, from, text, readAt?, createdAt }`. `text` de 1 a 1000 caracteres.
+  - **Message**: `{ _id, date, from, text, readAt?, createdAt }`. `text` de 1 a 1000 caracteres. Llega por el socket y por `GET /dates/:dateId/messages`.
   - **Block**: `{ _id, blocker, blocked, createdAt }`. Un solo bloqueo por pareja (blocker, blocked).
   - **Report**: `{ _id, reporter, reported, date?, reason, text?, status, severity?, resolution?, reviewedBy?, reviewedAt?, createdAt, updatedAt }`. `reason` es `'harassment'`,
     `'fake_profile'`, `'inappropriate'` u `'other'`; `status`, `'open'`, `'reviewed'` o `'dismissed'`; `severity` (`'low'`, `'medium'` o `'high'`) y `resolution` las pone el admin.
@@ -150,6 +170,11 @@ Lo que backend y frontend tienen que cumplir igual. Si algo de aquí cambia, se 
 #### Mi perfil (`feat/perfil-web`)
 
 - [x] Pantalla Mi perfil: foto, datos, contactos de confianza (opcionales) y cerrar sesión · Miguel Ángel
+
+#### Mis Dates y chat (`feat/chat-web`)
+
+- [x] Mis Dates: bandejas de Pendientes y En curso, con su reloj · Diego
+- [x] Chat en tiempo real con el historial, el turno y la prórroga · Diego
 
 ## Bitácora
 
@@ -427,3 +452,32 @@ La bitácora del Seminario 7, de donde viene este código, se conserva en el tag
 - Validación ejecutada: `npm run lint`, `npm run typecheck`, `npm run build` y `npm test` en verde. En el navegador contra la API local: Laia ve
   su perfil con sus 2 contactos; cambia la bio y "qué busco", guarda, y al recargar los cambios siguen; sin errores en consola; a 1366 px y a 390 px.
 - Prompt de IA usado: el del bloque "4 · Mi perfil" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).
+
+### 2026-11-25 · Sprint 2: Mis Dates y el chat en la web (`feat/chat-web`)
+
+- **Mis Dates** (`pages/MisDates.tsx`, `components/dates/ListaDates.tsx`): las dos bandejas del blog, Pendientes (fuego) y En curso (corazón), con su
+  contador; el aviso de los Dates que esperan que escriba yo y cuánto queda del más urgente; y una tarjeta por Date con la otra persona, a quién le
+  toca ("Te toca escribir a ti" / "Empieza Pau") y el reloj de lo que falta para caducar. El reloj se recalcula cada medio minuto con el hook `useNow`.
+  Los cerrados no se listan. Se cargan todos de una vez (`dateService.getMyDates`, hasta 100) y se reparten entre las bandejas en la pantalla.
+- **La misma pantalla para la lista y la conversación**: `/dates` y `/dates/:dateId`. En escritorio se ven las dos columnas (340 px + la charla) y
+  en el móvil solo una, con el botón de volver, como en la plantilla. Un Date abierto por su URL que no está en las bandejas (uno cerrado) se pide
+  aparte con `GET /dates/:id`.
+- **El socket** (`packages/shared/src/services/chat.service.ts` y `models/chat.model.ts`, los mismos eventos que el backend): `connectChat()` abre
+  socket.io contra el origen de la API (con `VITE_API_URL=/api`, contra el origen de la página, donde nginx reenvía `/socket.io`) mandando el access
+  token en el handshake con una función, para que cada reconexión lleve el token actual. Si el servidor rechaza por "El token ha caducado", renueva
+  con el refresh token y reconecta. La web lo abre una vez por pantalla con el hook `useChat` y lo cierra al salir.
+- **La conversación** (`components/dates/Charla.tsx`): carga la última página del historial por HTTP (`dateService.getMessages`, 50 por página, con
+  "Ver mensajes anteriores" si hay más), entra en la sala del Date (`date:join`, y otra vez en cada reconexión) y escucha `date:message`,
+  `date:updated`, `date:read` y `chat:error`. Mis mensajes a la derecha en azul con la hora y ✓ / ✓✓ (leído); los de la otra persona a la izquierda;
+  separadores de día (HOY, AYER, fecha). Mientras el Date está pendiente, solo escribe quien tiene el turno: la otra persona ve el campo desactivado
+  con "Empieza Pau…" y el reloj "Quedan 23 h 12 min"; el primer mensaje pasa el Date a En curso y la lista lo mueve de bandeja sola gracias a
+  `date:updated`. La prórroga (+24 h, una vez) está en la franja del Date y la otra persona la ve llegar sin recargar. En un Date cerrado se lee pero
+  no se escribe. Los avisos del servidor (`chat:error`) salen como toast.
+- Lo de `packages/shared` sirve igual para el móvil: `otherUser`, `isMyTurn`, `remainingMs`, `replaceDate` (`utils/dates.ts`) y `MESSAGES_PAGE_SIZE`.
+- Validación ejecutada: `npm run lint`, `npm run typecheck` y `npm test` en verde (5 tests nuevos de los textos de tiempo). En el navegador contra
+  la API local: Hugo ve su Date pendiente con Júlia en Pendientes (1), el aviso "Tienes 1 Date esperando que escribas tú. Quedan 47 h" y la etiqueta
+  de prórroga; abre la conversación y ve "Te toca empezar. Quedan 47 h 44 min" y el vacío "Aún no hay mensajes"; escribe el primer mensaje y al
+  momento la franja pasa a "En curso · Empezó hoy a las 16:26" y las bandejas a Pendientes 0 / En curso 1 sin recargar; Júlia, desde otro socket,
+  contesta y su mensaje aparece al instante, y al marcarlo como leído el mensaje de Hugo pasa de ✓ a ✓✓. Sin errores en consola de la app; a 1366 px
+  (dos columnas) y a 390 px (lista y conversación por separado, con el botón de volver).
+- Prompt de IA usado: el del bloque "5 · Mis Dates y chat" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).
