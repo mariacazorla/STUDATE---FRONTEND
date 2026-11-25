@@ -22,6 +22,11 @@ Expo enseña un código QR. Con la app **Expo Go** en el teléfono (Android o iO
 abre en el móvil. También se puede abrir en el navegador (`w` en la terminal, o
 `npx expo start --web` dentro de `apps/movil`), que es como se ha probado durante el desarrollo.
 
+Si el teléfono no llega al ordenador por la wifi (por ejemplo, con el repo dentro de WSL2, que tiene su
+propia red), se arranca con un túnel: `npx expo start --tunnel ngrok` dentro de `apps/movil`. Hay que
+poner `ngrok`: desde Expo SDK 58, `--tunnel` a secas usa el túnel propio de Expo y exige una cuenta
+(`npx expo login`). El QR que sale funciona desde cualquier red.
+
 ## Contra qué API
 
 La dirección de la API se lee del `.env` (`EXPO_PUBLIC_API_URL`), en un solo fichero
