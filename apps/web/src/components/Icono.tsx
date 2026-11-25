@@ -63,6 +63,14 @@ const DIBUJOS = {
     </>
   ),
   bandera: <path d="M5 21V4M5 4h11l-2 4 2 4H5" />,
+  // Backoffice: buscar y nuevo
+  buscar: (
+    <>
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="M16 16l4.5 4.5" />
+    </>
+  ),
+  mas: <path d="M12 5v14M5 12h14" />,
   bloquear: (
     <>
       <circle cx="12" cy="12" r="9" />

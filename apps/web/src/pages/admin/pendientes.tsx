@@ -1,16 +1,6 @@
-import { PantallaVacia } from '../components/PantallaVacia';
+import { PantallaVacia } from '../../components/PantallaVacia';
 
-// Las pantallas del backoffice, solo para el admin. De momento están vacías: se rehacen en React
-// en el bloque del backoffice, y cada una pasará a tener su propio fichero.
-
-export function UsuariosAdmin() {
-  return (
-    <PantallaVacia
-      titulo="Usuarios"
-      texto="Lista de usuarios con búsqueda, filtros y paginación del servidor, y su formulario."
-    />
-  );
-}
+// Las pantallas del backoffice que todavía están vacías: cada una pasa a su propio fichero en su tarea
 
 export function OrlaAdmin() {
   return <PantallaVacia titulo="La Orla" texto="Los votos de La Orla, con sus filtros." />;
