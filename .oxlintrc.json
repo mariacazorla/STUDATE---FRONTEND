@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "typescript", "oxc"],
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/only-export-components": ["warn", { "allowConstantExport": true }]
+  },
+  "ignorePatterns": ["**/node_modules/**", "**/dist/**", "**/.expo/**", "mockups/**"],
+  "overrides": [
+    {
+      "files": ["packages/shared/**"],
+      "rules": {
+        "no-restricted-globals": [
+          "error",
+          { "name": "window", "message": "packages/shared lo usan la web y el móvil: no puede depender del navegador." },
+          { "name": "document", "message": "packages/shared lo usan la web y el móvil: no puede depender del navegador." },
+          { "name": "localStorage", "message": "packages/shared lo usan la web y el móvil: no puede depender del navegador." },
+          { "name": "sessionStorage", "message": "packages/shared lo usan la web y el móvil: no puede depender del navegador." }
+        ]
+      }
+    }
+  ]
+}
