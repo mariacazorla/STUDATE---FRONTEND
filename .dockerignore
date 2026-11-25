@@ -1,0 +1,23 @@
+# Lo que no se copia a la imagen de la web. Las dependencias y lo compilado se generan dentro de ella.
+node_modules
+**/node_modules
+**/dist
+**/.expo
+
+# La app del móvil no va en Docker: se instala en el teléfono
+apps/movil
+
+# Repositorio, documentación y herramientas
+.git
+.github
+.vscode
+*.md
+mockups
+**/*.test.ts
+**/*.test.tsx
+
+# Variables de entorno: nunca dentro de la imagen
+.env
+**/.env
+**/.env.*
+!**/.env.example
