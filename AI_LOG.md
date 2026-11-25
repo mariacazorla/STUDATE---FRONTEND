@@ -148,3 +148,20 @@ Modelo en el Sprint 2: Claude Fable 5.2.
   - React se fija a `19.2.3` en la raíz con `overrides`, para que la web y el móvil usen la misma copia.
   - Una regla del linter prohíbe `window`, `document` y `localStorage` dentro de `packages/shared`, porque ese código también se ejecuta en el móvil.
   - La app del móvil pasa a su propia rama (`feat/movil-base`), después de `feat/shared`.
+
+### 2. Lo compartido: modelos, cliente HTTP con JWT, servicios y tema (`feat/shared`)
+
+- **Pregunta:** cómo pasar a React lo que teníamos en Angular (modelos, interceptor del JWT y servicios) de forma que lo usen igual la web y la app del móvil.
+- **Prompt:** el mismo del bloque de estructura (entrada anterior). De esta rama es la parte: «En lo compartido van los modelos, el cliente HTTP con JSON Web Token para absolutamente todo y los servicios de la API: es pasar lo que teníamos en Angular a React. [...] La web y el móvil tienen que tener el mismo estilo visual, el del blog, así que el tema va en un solo sitio.»
+- **Incoherencias:**
+  - El interceptor de Angular decidía si renovar el token comparando el mensaje del 401 con el texto "El token ha caducado". Al recargar la página (sin token en memoria) el mensaje es otro y se cerraba la sesión.
+  - El refresh token se guarda distinto en cada plataforma (cookie HttpOnly en la web, almacén cifrado en el móvil), pero `packages/shared` no puede importar nada del navegador ni de Expo.
+  - Cada listado de la API llama a su lista con un nombre distinto (`users`, `dates`, `plans`...), y así un hook de listas no sirve para todos.
+  - Sin conexión, el refresh falla igual que con una sesión caducada: tratarlos igual cerraría la sesión por un corte de red.
+- **Solución:**
+  - Modelos en TypeScript de los ocho modelos del backend y `Paginated<T>`. El estudiante es un `User` con rol `user`.
+  - `http.ts` con la forma del `request()` del Seminario 8 y lo que hacía el interceptor: el access token solo en memoria, `Authorization` en todo salvo registro, login, refresh y logout, y ante cualquier 401 una sola renovación en curso (compartida por las peticiones que fallen a la vez) y un reintento. Si no se puede renovar, se avisa de que la sesión se ha perdido. Un fallo de red devuelve un error con `status 0` y no cierra la sesión.
+  - Lo que cambia entre plataformas va en un adaptador que cada app pasa con `configureHttp()`: la web pone `credentials: 'include'`; el móvil, la cabecera `X-Client: movil` y un almacén para el refresh token.
+  - Servicios de `auth`, `users`, `grades`, `dates` y `plans`, que devuelven los listados como `Paginated<T>`. La sesión (el usuario) vive en un store de Nanostores, `$user`.
+  - `tokens.ts` con los colores, tipografías, radios, sombras y espacios del blog.
+  - Tests con Vitest: 15 del cliente HTTP (token en cada petición, renovar y reintentar, una sola renovación, sesión perdida, web y móvil) y 7 del servicio de autenticación.
