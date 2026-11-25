@@ -90,6 +90,19 @@ export interface CreateUser {
 // PUT /users/:id: lo mismo sin la contraseña (desde el backoffice no se cambia)
 export type UpdateUser = Omit<CreateUser, 'password'>;
 
+// PUT /users/me: lo que un estudiante cambia de su propio perfil. Ni el email, ni el rol, ni active
+// (la API responde 422 si se envían). Los contactos de confianza son opcionales y como mucho 3
+export interface UpdateMyProfile {
+  name: string;
+  birthDate?: string;
+  degree?: string;
+  lookingFor?: string;
+  bio?: string;
+  // '' quita la foto
+  photo?: string;
+  trustedContacts?: TrustedContact[];
+}
+
 // GET /users/directory: los demás estudiantes activos, solo con lo que cualquiera puede ver
 export interface DirectoryUser {
   _id: string;
