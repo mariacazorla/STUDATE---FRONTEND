@@ -33,6 +33,10 @@ igual. Pero hablan con la misma API y tienen el mismo aspecto, así que todo lo 
 escribe una sola vez en `packages/shared` y las dos apps lo importan con
 `import { ... } from '@studate/shared'`. Si la API cambia, se cambia en un solo sitio.
 
+Cómo encaja todo (la web, el móvil, nginx, la API, socket.io y MongoDB) y el camino de una petición con
+JWT está explicado, con su diagrama, en el README de
+[STUDATE---DOCKER](https://github.com/mariacazorla/STUDATE---DOCKER#arquitectura).
+
 ## Stack tecnológico
 
 | Tecnología | Dónde | Para qué se usa |

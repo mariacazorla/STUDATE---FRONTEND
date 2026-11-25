@@ -294,3 +294,13 @@ Modelo en el Sprint 2: Claude Fable 5.2.
   - `configureHttp` con `X-Client: movil` y `expo-secure-store` como almacén del refresh token; el layout raíz recupera la sesión y protege las rutas; pestañas con Expo Router.
   - Las cuatro pantallas con los servicios compartidos y los tokens en `StyleSheet`; el socket con el mismo `connectChat()` de la web; las ventanas de seguridad como hojas (`Modal`).
   - `.env.example` y `README.md` de la app con la URL del servidor por HTTPS y la guía de Expo Go.
+
+### 12. Cierre y documentación (`feat/documentacion`)
+
+- **Pregunta:** cómo dejar el repo listo para la entrega: GitHub Actions con lint, tipos, tests y build, y los LOGS y README al día.
+- **Prompt:** «Según la planificación establecida previamente, vamos a proceder de esta forma. Ya toca el segundo despliegue y el cierre (bloque 9 del plan, de la 49 a la 54). [...] También hay que hacer lo de GitHub Actions, con el lint, el build y los tests en cada push, en el backend y en el frontend. Y dejar todo al día: LOGS y README, el diagrama de clases, el flujo de arquitectura, y el GitHub Project y las horas. Dime el plan de acción.»
+- **Incoherencias:**
+  - El workflow ya existía desde el bloque de Docker con lint, tipos, tests y build: no había que crear nada, solo comprobarlo y documentarlo.
+  - La app del móvil no tiene imagen de Docker ni se despliega: en CI solo se comprueban sus tipos.
+- **Solución:**
+  - Se revisa el workflow y se apunta qué pasa. README de la raíz y de `apps/movil` repasados; el contrato y las tareas de este LOGS, completos.
