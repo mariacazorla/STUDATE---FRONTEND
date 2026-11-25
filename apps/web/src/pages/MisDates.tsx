@@ -1,12 +1,14 @@
 import { useStore } from '@nanostores/react';
-import { $user, dateService } from '@studate/shared';
+import { $user, dateService, replaceDate } from '@studate/shared';
 import type { StudateDate } from '@studate/shared';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import { Charla } from '../components/dates/Charla';
 import { ListaDates } from '../components/dates/ListaDates';
 import type { Bandeja } from '../components/dates/ListaDates';
 import { Icono } from '../components/Icono';
+import { useChat } from '../hooks/useChat';
 import { useNow } from '../hooks/useNow';
 import { isAbort } from '../utils/api-error';
 
@@ -16,15 +18,21 @@ type Estado = 'cargando' | 'normal' | 'error';
 // propia pantalla (en el móvil), la conversación del Date elegido. La misma pantalla sirve para
 // /dates (la lista) y /dates/:dateId (con un Date abierto): en escritorio se ven las dos columnas y en
 // el móvil solo una, con el botón de volver.
+//
+// El socket del chat se abre aquí, una vez para toda la pantalla: la conversación lo usa para la sala
+// de su Date, y la lista escucha date:updated para mover un Date de bandeja sin recargar.
 export function MisDates() {
   const me = useStore($user);
   const navigate = useNavigate();
   const { dateId } = useParams<{ dateId: string }>();
   const now = useNow();
+  const { socket, estado: conexion, error: errorChat } = useChat();
 
   const [estado, setEstado] = useState<Estado>('cargando');
   const [dates, setDates] = useState<StudateDate[]>([]);
   const [bandeja, setBandeja] = useState<Bandeja>('pending');
+  // Un Date abierto por su URL que no está en las bandejas (por ejemplo, uno cerrado)
+  const [aparte, setAparte] = useState<StudateDate | null>(null);
 
   // Todos mis Dates de una vez (un estudiante tiene pocos: el límite máximo de la API sobra)
   const load = useCallback(async (signal?: AbortSignal) => {
@@ -48,7 +56,43 @@ export function MisDates() {
     return () => controller.abort();
   }, [load]);
 
-  const selected = dateId ? dates.find((d) => d._id === dateId) : undefined;
+  // Un Date que ha cambiado (por el socket o por una acción mía) sustituye al suyo en la lista.
+  // useCallback: la conversación lo recibe por props y lo usa en un efecto
+  const onDateUpdated = useCallback((updated: StudateDate) => {
+    setDates((current) => replaceDate(current, updated));
+    setAparte((current) => (current && current._id === updated._id ? updated : current));
+  }, []);
+
+  // Mientras estoy en Mis Dates, cualquier Date mío que cambie se actualiza en la lista (la sala de
+  // cada Date la abre la conversación; aquí solo se escucha)
+  useEffect(() => {
+    if (!socket) {
+      return;
+    }
+    socket.on('date:updated', onDateUpdated);
+    return () => {
+      socket.off('date:updated', onDateUpdated);
+    };
+  }, [socket, onDateUpdated]);
+
+  const selected = dateId ? (dates.find((d) => d._id === dateId) ?? aparte) : undefined;
+
+  // Un Date de la URL que no está en la lista (cerrado, o la lista aún no ha llegado): se pide aparte
+  useEffect(() => {
+    if (!dateId || estado !== 'normal' || dates.some((d) => d._id === dateId)) {
+      return;
+    }
+    const controller = new AbortController();
+    dateService
+      .getDate(dateId, controller.signal)
+      .then(setAparte)
+      .catch((err) => {
+        if (!isAbort(err)) {
+          navigate('/dates', { replace: true });
+        }
+      });
+    return () => controller.abort();
+  }, [dateId, estado, dates, navigate]);
 
   if (!me) {
     return null;
@@ -58,6 +102,13 @@ export function MisDates() {
     <div className={`dates${dateId ? ' con-chat' : ''}`}>
       <div className="lista-col">
         <h1 className="t1">Mis Dates</h1>
+
+        {conexion === 'error' && (
+          <div className="aviso" role="alert">
+            Sin conexión con el chat{errorChat ? `: ${errorChat}` : ''}. Las conversaciones se verán, pero
+            no llegarán mensajes nuevos.
+          </div>
+        )}
 
         {estado === 'cargando' && (
           <div className="pila junta" aria-busy="true">
@@ -103,24 +154,34 @@ export function MisDates() {
 
       <div className="chatcol">
         {dateId ? (
-          <div className="charla card">
-            <div className="charla-cab">
-              <button type="button" className="icb solo-movil" aria-label="Volver" onClick={() => navigate('/dates')}>
-                <Icono nombre="volver" />
-              </button>
-              <div className="quien">
-                <b>{selected ? 'Conversación' : 'Date'}</b>
-                <span>El chat llega en la siguiente tarea</span>
+          selected ? (
+            <Charla
+              key={selected._id}
+              date={selected}
+              meId={me._id}
+              socket={socket}
+              conexion={conexion}
+              now={now}
+              onDateUpdated={onDateUpdated}
+              onBack={() => navigate('/dates')}
+            />
+          ) : (
+            <div className="charla card" aria-busy="true">
+              <div className="charla-cab">
+                <button type="button" className="icb solo-movil" aria-label="Volver" onClick={() => navigate('/dates')}>
+                  <Icono nombre="volver" />
+                </button>
+                <span className="esq" style={{ width: 160, height: 20 }} />
+              </div>
+              <div className="mensajes" />
+              <div className="escribir">
+                <input aria-label="Mensaje" disabled />
+                <button type="button" className="enviar" aria-label="Enviar" disabled>
+                  <Icono nombre="enviar" />
+                </button>
               </div>
             </div>
-            <div className="mensajes" />
-            <div className="escribir">
-              <input aria-label="Mensaje" placeholder="Escribe algo que merezca un A+…" disabled />
-              <button type="button" className="enviar" aria-label="Enviar" disabled>
-                <Icono nombre="enviar" />
-              </button>
-            </div>
-          </div>
+          )
         ) : (
           <div className="vacio centrado">
             <Icono nombre="chat" />
