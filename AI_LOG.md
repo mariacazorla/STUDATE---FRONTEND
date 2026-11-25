@@ -280,3 +280,17 @@ Modelo en el Sprint 2: Claude Fable 5.2.
   - `usePagedList` y las piezas de `components/admin/` para que las cinco pantallas paginen y pinten igual, con la tabla en escritorio y tarjetas en el móvil.
   - `UsuariosAdmin` y `UsuarioForm` (con `useForm` y la foto reducida como en Mi perfil), `OrlaAdmin`, `DatesAdmin` (pestañas, detalle con el historial, cerrar con motivo) y `SeguridadAdmin` (socket con `alert:new` y `alert:updated`, atender, revisar partes).
   - Probado en el navegador como admin, con una alerta lanzada desde la API para ver que llega sin recargar; a 1366 px y a 390 px.
+
+### 11. La app del móvil (`feat/movil`)
+
+- **Pregunta:** cómo hacer la app del estudiante en el móvil con Expo, con el mismo aspecto que la web y reutilizando lo compartido del monorepo, con el refresh token guardado de forma segura.
+- **Prompt:** «Según la planificación establecida previamente, vamos a proceder de esta forma. Ahora la app del móvil (bloque 8 del plan, de la 44 a la 48): lo mismo que la web, pero para el móvil y con el mismo estilo visual, sacado del tema compartido. No es lo más importante, pero hay que hacerlo. De momento sin funciones nativas. Se hace a partir del Seminario 8 de React Native y con lo compartido del monorepo: los modelos, el cliente HTTP con JSON Web Token y los servicios. En el móvil el refresh va en el body y se guarda de forma segura. Al final tiene que funcionar contra el servidor, por HTTPS. Dime el plan de acción.»
+- **Incoherencias:**
+  - "Sin funciones nativas" deja fuera la galería del teléfono: la foto de perfil se ve en el móvil pero se cambia desde la web.
+  - El gesto de deslizar de la web usa Pointer Events del navegador, que no existen en React Native: se rehace con `PanResponder` y `Animated` (sin añadir librerías nativas), con el mismo umbral.
+  - Los textos de tiempo ("quedan 23 h", "hoy a las 16:43") estaban en la web y el móvil los necesita igual: se mueven al paquete compartido con sus tests.
+  - No se puede probar en un teléfono desde aquí: la app se ha probado en el navegador con `expo start --web` (react-native-web), que cubre las pantallas, la sesión, el socket y las hojas; el gesto físico y el almacén cifrado quedan por mirar con Expo Go.
+- **Solución:**
+  - `configureHttp` con `X-Client: movil` y `expo-secure-store` como almacén del refresh token; el layout raíz recupera la sesión y protege las rutas; pestañas con Expo Router.
+  - Las cuatro pantallas con los servicios compartidos y los tokens en `StyleSheet`; el socket con el mismo `connectChat()` de la web; las ventanas de seguridad como hojas (`Modal`).
+  - `.env.example` y `README.md` de la app con la URL del servidor por HTTPS y la guía de Expo Go.

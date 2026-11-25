@@ -214,6 +214,14 @@ Lo que backend y frontend tienen que cumplir igual. Si algo de aquí cambia, se 
 - [x] Dates y Planes del admin, con el historial de cada Date · María
 - [x] Seguridad del admin: alertas de ayuda en tiempo real y partes con su gravedad · Diego
 
+#### La app en el móvil (`feat/movil`)
+
+- [x] Base de la app: tema común, pestañas y login con la sesión guardada de forma segura · Diego
+- [x] La Orla en el móvil, con el gesto de deslizar · María
+- [x] Mis Dates y chat en el móvil · Diego
+- [x] Mi perfil y seguridad en el móvil · María
+- [x] La app contra la API del servidor por HTTPS y demo con Expo Go (la configuración y la guía; la prueba con datos móviles, al desplegar) · Diego
+
 ## Bitácora
 
 La bitácora del Seminario 7, de donde viene este código, se conserva en el tag `seminari7-base`
@@ -572,3 +580,33 @@ La bitácora del Seminario 7, de donde viene este código, se conserva en el tag
   toast, se marca como atendida y desaparece de las abiertas; un parte se revisa y pasa a Revisado. Sin errores en consola; a 1366 px y a 390 px (las
   tablas como tarjetas y las ventanas como hoja).
 - Prompt de IA usado: el del bloque "7 · Backoffice en React" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).
+
+### 2026-11-25 · Sprint 2: la app del móvil (`feat/movil`)
+
+- La app del estudiante en Expo (React Native) con Expo Router, en `apps/movil`, con el mismo aspecto que la web porque todo lo que no se pinta es
+  de `packages/shared`: el tema (`tokens` en los `StyleSheet`), los modelos, el cliente HTTP con JWT, los servicios, el socket del chat y, desde
+  esta rama, también los textos de tiempo (`utils/tiempo.ts` se ha movido de la web al paquete compartido, con sus tests). Sin funciones nativas.
+- **Base** (`_layout.tsx`, `(auth)/`, `(tabs)/`): `configureHttp` con la cabecera `X-Client: movil` (el login devuelve el refresh token en el JSON) y el
+  almacén cifrado del teléfono como `refreshTokenStore` (`expo-secure-store`; en el navegador, `localStorage` solo para desarrollo). Al arrancar se
+  recupera la sesión antes de pintar y el layout raíz hace de rutas protegidas: sin sesión solo se puede estar en login y registro; con ella, en las
+  pestañas (La Orla, Mis Dates y Mi perfil, con iconos de Ionicons). Un admin ve que el backoffice es solo web. Cerrar y abrir la app mantiene la sesión.
+- **La Orla** (`orla.tsx`, `ExpedienteCard`): el gesto con `PanResponder` y `Animated` (vienen con React Native): la tarjeta sigue al dedo con rotación,
+  los sellos A+ y F aparecen al arrastrar, al soltar más allá del umbral (90 px, el de la web) sale volando y vota, y si no vuelve con un muelle. Solo coge
+  el gesto si el dedo va en horizontal, para no robarle el scroll a la pantalla. Botones F y A+, cupo del día, aviso de deshacer con cuenta atrás y la
+  pantalla ¡Tenéis Date! en un `Modal`.
+- **Mis Dates y el chat** (`dates/index.tsx`, `dates/[dateId].tsx`): las bandejas con su reloj y el avisador (la lista se vuelve a pedir al volver a la
+  pestaña), y la conversación con el historial por HTTP, la sala por el socket (`useChat`, el mismo que en la web), el turno, la prórroga, los ✓✓ y los
+  separadores de día. Un mensaje de la web llega al móvil al momento, y al revés.
+- **Mi perfil y seguridad** (`perfil.tsx`, `components/Seguridad.tsx`): nombre, fecha, titulación (pastillas), qué busco, bio y los contactos de
+  confianza (hasta 3, opcionales); la foto se ve pero se cambia desde la web (la galería es una función nativa). Bloquear y mandar un parte desde el
+  Expediente y desde el chat, y el botón de ayuda en el chat, en hojas que suben desde abajo (`Modal`), con los mismos textos que la web.
+- **Contra el servidor**: `EXPO_PUBLIC_API_URL=https://ea3.upc.edu/api` (la API por HTTPS detrás de nginx); el socket va contra el origen, donde nginx
+  reenvía `/socket.io`. Guía en `apps/movil/README.md` (Expo Go, la IP de la wifi en local, el emulador). La prueba con datos móviles queda para el
+  despliegue.
+- Validación ejecutada: `npm run lint`, `npm run typecheck` (web, móvil y shared) y `npm test` en verde (los tests de tiempo pasan al paquete compartido).
+  La app en el navegador (`expo start --web`) a 390 px contra la API local: el login de Laia lleva a las pestañas y al recargar sigue dentro; en La Orla
+  aprueba a Nerea (que ya le había dado A+) y sale el ¡Tenéis Date! con el sorteo y el aviso de deshacer con la cuenta atrás; en Mis Dates aparece el
+  Date pendiente con "Te toca escribir a ti" y el reloj; en el chat escribe el primer mensaje (pasa a En curso), Nerea responde desde otro socket y el
+  mensaje llega al momento con el ✓✓ del leído; Mi perfil rellenado con sus datos y sus 2 contactos; el botón de ayuda enseña "Avisaremos ahora a tus
+  2 contactos de confianza". Sin errores en consola. Queda por verla en un teléfono con Expo Go (el gesto físico y el almacén cifrado).
+- Prompt de IA usado: el del bloque "8 · La app en el móvil" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).

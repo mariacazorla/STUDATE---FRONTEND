@@ -45,6 +45,7 @@ escribe una sola vez en `packages/shared` y las dos apps lo importan con
 | [Nanostores](https://github.com/nanostores/nanostores) | web y shared | Estado global pequeño (la sesión) |
 | [socket.io-client](https://socket.io/docs/v4/client-api/) | shared | El chat de los Dates en tiempo real, con el JWT en el handshake |
 | [Expo](https://expo.dev/) SDK 57 + Expo Router | móvil | React Native para Android e iOS |
+| [expo-secure-store](https://docs.expo.dev/versions/latest/sdk/securestore/) | móvil | El refresh token en el almacén cifrado del teléfono |
 | [Vitest](https://vitest.dev/) | web y shared | Tests |
 | [oxlint](https://oxc.rs/docs/guide/usage/linter) y [Prettier](https://prettier.io/) | raíz | Linter y formato, con una sola configuración para todo |
 
