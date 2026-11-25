@@ -2,7 +2,7 @@ import { isMyTurn, otherUser, remainingMs } from '@studate/shared';
 import type { DateStatus, StudateDate } from '@studate/shared';
 
 import { initials } from '../../utils/format';
-import { empezoEl, horaCorta, restanteCorto } from '../../utils/tiempo';
+import { empezoEl, horaCorta, restanteCorto } from '@studate/shared';
 import { Icono } from '../Icono';
 
 // Las dos bandejas de Mis Dates, como en el blog: Pendientes (fuego), donde todavía no ha llegado el

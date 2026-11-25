@@ -19,7 +19,7 @@ import { useNow } from '../../hooks/useNow';
 import { usePagedList } from '../../hooks/usePagedList';
 import { errorMessage } from '../../utils/api-error';
 import { initials } from '../../utils/format';
-import { fechaHora, restanteCorto } from '../../utils/tiempo';
+import { fechaHora, restanteCorto } from '@studate/shared';
 
 type Pestana = 'dates' | 'planes';
 
