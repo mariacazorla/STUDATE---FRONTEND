@@ -38,6 +38,12 @@ const DIBUJOS = {
   salir: <path d="M14 4h5v16h-5M10 8l-4 4 4 4M6 12h10" />,
   enviar: <path d="M4 12h14M13 6l6 6-6 6" />,
   check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
+  deshacer: (
+    <>
+      <path d="M9 14 4 9l5-5" />
+      <path d="M4 9h11a5 5 0 0 1 0 10h-3" />
+    </>
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type NombreIcono = keyof typeof DIBUJOS;

@@ -17,6 +17,22 @@ export function formatDate(iso?: string): string {
   return `${day}/${month}/${year}`;
 }
 
+// La edad a partir de la fecha de nacimiento (ISO). undefined si no hay fecha.
+// Resta un año si todavía no ha llegado el cumpleaños de este año
+export function edad(birthDate?: string): number | undefined {
+  if (!birthDate) {
+    return undefined;
+  }
+  const nacimiento = new Date(birthDate);
+  const hoy = new Date();
+  let años = hoy.getFullYear() - nacimiento.getFullYear();
+  const cumpleEsteAño = new Date(hoy.getFullYear(), nacimiento.getMonth(), nacimiento.getDate());
+  if (hoy < cumpleEsteAño) {
+    años -= 1;
+  }
+  return años;
+}
+
 // Iniciales para el círculo de quien no tiene foto: primera y última palabra ("Laia Puig" -> "LP")
 export function initials(name: string): string {
   const words = name.split(' ').filter((word) => word);

@@ -1,16 +1,7 @@
 import { PantallaVacia } from '../components/PantallaVacia';
 
-// Las pantallas de la app del estudiante. De momento están vacías: cada una se hará en su bloque
-// y pasará a tener su propio fichero. Aquí ya existen para que el menú y las rutas funcionen.
-
-export function Orla() {
-  return (
-    <PantallaVacia
-      titulo="La Orla"
-      texto="Aquí irás viendo Expedientes de gente de tu campus para ponerles A+ o F."
-    />
-  );
-}
+// Las pantallas de la app del estudiante que todavía están vacías (La Orla ya tiene la suya en Orla.tsx).
+// Cada una se hará en su bloque y pasará a tener su propio fichero.
 
 export function MisDates() {
   return (

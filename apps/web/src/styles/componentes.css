@@ -478,6 +478,367 @@
   margin-top: var(--esp-sm);
 }
 
+/* ==========================================================================================
+   La Orla (pantalla del estudiante) y ¡Date!
+   ========================================================================================== */
+
+.orla {
+  display: grid;
+  gap: var(--esp-lg);
+}
+
+.orla-cab {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--esp-sm) var(--esp-md);
+}
+
+/* La cuota de A+ de hoy, en la cabecera */
+.cupo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-sm);
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--borde);
+  border-radius: var(--r-pastilla);
+  background: var(--blanco);
+  font: 600 13.5px/1 var(--f-text);
+}
+
+.cupo b {
+  color: var(--azul);
+}
+
+.cupo .est {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--maiz);
+  color: var(--noche);
+  font-size: 11px;
+}
+
+/* La columna central: la tarjeta, los botones y la pista del teclado, centrados y estrechos */
+.orla-centro {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+}
+
+/* ---------- La tarjeta del Expediente ---------- */
+.exp {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 420px;
+  /* La tarjeta se arrastra; que no se seleccione el texto ni salga el menú del navegador al mantener */
+  user-select: none;
+  cursor: grab;
+}
+
+.exp:active {
+  cursor: grabbing;
+}
+
+.exp .foto {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  background: var(--niebla);
+}
+
+.exp .foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Si no hay foto, las iniciales grandes sobre el fondo de marca */
+.exp .foto-sin {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: var(--azul-suave);
+  color: var(--azul);
+  font: 900 72px/1 var(--f-display);
+}
+
+/* Los datos van sobre la foto, con un degradado para que se lean */
+.exp .sobre {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 70px var(--esp-lg) var(--esp-lg);
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--noche) 92%, transparent));
+  color: var(--blanco);
+}
+
+.exp .nombre {
+  margin: 0 0 6px;
+  font: 900 30px/1 var(--f-display);
+  font-stretch: 125%;
+}
+
+.exp .dato {
+  font-size: 14px;
+  opacity: 0.95;
+}
+
+.exp .gustos {
+  margin-top: var(--esp-sm);
+  font-size: 13.5px;
+  opacity: 0.95;
+}
+
+.exp .bio-exp {
+  margin: var(--esp-sm) 0 0;
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+/* Los sellos del gesto: A+ (verde, a la derecha) y F (rojo, a la izquierda), aparecen al deslizar */
+.exp .sello {
+  position: absolute;
+  top: 24px;
+  padding: 8px 18px;
+  border: 5px solid;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--blanco) 85%, transparent);
+  font: 900 15px/1 var(--f-display);
+  letter-spacing: 0.1em;
+  pointer-events: none;
+}
+
+.exp .sello b {
+  font-size: 44px;
+}
+
+.exp .sello-a {
+  right: 18px;
+  transform: rotate(14deg);
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
+.exp .sello-f {
+  left: 18px;
+  transform: rotate(-14deg);
+  border-color: var(--ko);
+  color: var(--ko);
+}
+
+/* ---------- Los botones de voto ---------- */
+.acciones {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+}
+
+.voto-et {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  font: 400 10.5px/1 var(--f-label);
+  letter-spacing: 0.08em;
+  color: var(--gris);
+}
+
+.voto {
+  display: grid;
+  place-items: center;
+  width: 70px;
+  height: 70px;
+  border: 0;
+  border-radius: 50%;
+  color: var(--blanco);
+  font: 900 26px/1 var(--f-display);
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--noche) 22%, transparent);
+}
+
+.voto.f {
+  background: var(--ko);
+}
+
+.voto.a {
+  background: var(--ok);
+}
+
+.voto:disabled {
+  opacity: 0.4;
+  box-shadow: none;
+}
+
+.deshacer {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 1.5px solid var(--borde-campo);
+  border-radius: 50%;
+  background: var(--blanco);
+  color: var(--gris);
+}
+
+.deshacer:disabled {
+  opacity: 0.4;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .voto:active:not(:disabled) {
+    transform: scale(0.95);
+  }
+}
+
+/* La pista del teclado (y el aviso de cupo lleno) */
+.teclas {
+  color: var(--gris);
+  font-size: 12.5px;
+  text-align: center;
+}
+
+.teclas kbd {
+  padding: 2px 6px;
+  border: 1px solid var(--borde-campo);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--blanco);
+  font: 600 11.5px/1 var(--f-text);
+}
+
+/* ---------- Aviso de deshacer, con cuenta atrás ---------- */
+.toast {
+  position: sticky;
+  bottom: var(--esp-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--esp-md);
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: var(--esp-md) 14px;
+}
+
+.toast .anillo {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.toast .anillo span {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--blanco);
+  color: var(--azul);
+  font: 700 13px/1 var(--f-text);
+}
+
+.toast-texto {
+  flex: 1;
+  font-size: 14px;
+}
+
+/* ---------- ¡Tenéis Date! (pantalla completa) ---------- */
+.match {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 28px 20px;
+  background: radial-gradient(circle at 30% 20%, var(--morado) 0, transparent 50%), linear-gradient(160deg, var(--azul), var(--rosa-boton));
+  color: var(--blanco);
+  text-align: center;
+  overflow: auto;
+}
+
+.match-in {
+  display: grid;
+  justify-items: center;
+  gap: var(--esp-lg);
+  width: 100%;
+  max-width: 440px;
+}
+
+.match h2 {
+  margin: 0;
+  font: 900 64px/0.95 var(--f-display);
+  font-stretch: 125%;
+  text-shadow: 4px 4px 0 var(--rosa-boton);
+}
+
+.pareja {
+  display: flex;
+  justify-content: center;
+}
+
+.pareja img,
+.pareja-sin {
+  width: 96px;
+  height: 96px;
+  border: 4px solid var(--blanco);
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.pareja-sin {
+  display: grid;
+  place-items: center;
+  background: var(--azul-suave);
+  color: var(--azul);
+  font: 900 30px/1 var(--f-display);
+}
+
+.pareja img + img,
+.pareja img + .pareja-sin,
+.pareja-sin + img {
+  margin-left: -18px;
+}
+
+.match-nombres {
+  margin: 0;
+  font-weight: 600;
+}
+
+.sorteo {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: var(--r-tarjeta);
+  background: var(--blanco);
+  color: var(--noche);
+  text-align: left;
+}
+
+/* Sobre el fondo de color, los botones del ¡Date! cambian: amarillo el principal, borde claro el otro */
+.match .btn {
+  background: var(--maiz);
+  box-shadow: none;
+  color: var(--noche);
+}
+
+.match .btn2 {
+  border-color: color-mix(in srgb, var(--blanco) 50%, transparent);
+  background: transparent;
+  color: var(--blanco);
+}
+
+@media (min-width: 560px) {
+  .match h2 {
+    font-size: 72px;
+  }
+}
+
 /* ---------- Avisos temporales (Context API) ---------- */
 .avisos-flotantes {
   position: fixed;
