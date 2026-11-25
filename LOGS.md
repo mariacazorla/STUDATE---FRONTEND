@@ -379,3 +379,6 @@ La bitácora del Seminario 7, de donde viene este código, se conserva en el tag
   por `/api/auth/login` entra en La Orla y al recargar la sesión se mantiene (`/api/auth/refresh` 200 con la cookie y después `/users/me`),
   sin ningún error en la consola. El workflow no se ha podido ejecutar todavía: lo hará el primer push.
 - Prompt de IA usado: el del bloque "Primer despliegue en Docker" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).
+- Más tarde, en `feat/https`: la configuración de nginx se divide en `apps/web/nginx/default.conf` (el server de http, en la imagen) y
+  `apps/web/nginx/studate-app.conf` (las reglas, que incluyen con `include` ese server y el de https del repo de despliegue). Probado con el
+  compose por https en local: TLS 1.3, HTTP/2, cookie `Secure` y la sesión se renueva.

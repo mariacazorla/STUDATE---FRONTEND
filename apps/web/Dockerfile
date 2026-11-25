@@ -28,7 +28,9 @@ ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build --workspace @studate/web
 
 FROM nginx:1.29-alpine
-# La configuración propia sustituye a la de nginx por defecto (ver nginx.conf)
-COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
+# La configuración propia sustituye a la de nginx por defecto: el server de http (default.conf) y las
+# reglas que comparte con el de https (studate-app.conf, ver la carpeta nginx/)
+COPY apps/web/nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY apps/web/nginx/studate-app.conf /etc/nginx/studate-app.conf
 COPY --from=build /app/apps/web/dist /usr/share/nginx/html
 EXPOSE 80
