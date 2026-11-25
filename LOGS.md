@@ -225,6 +225,7 @@ Lo que backend y frontend tienen que cumplir igual. Si algo de aquí cambia, se 
 #### Segundo despliegue y cierre (`feat/documentacion`)
 
 - [x] GitHub Actions: lint, tipos, tests y build en cada push · Diego
+- [x] Segundo despliegue en ea3 (https://ea3.upc.edu) y prueba de punta a punta; fix de nginx para que resuelva la API cada 10 s · Miguel Ángel
 - [x] LOGS y README al día · Miguel Ángel
 
 ## Bitácora
@@ -627,3 +628,13 @@ La bitácora del Seminario 7, de donde viene este código, se conserva en el tag
   [STUDATE---DOCKER](https://github.com/mariacazorla/STUDATE---DOCKER); el diagrama de clases, en el de
   [STUDUDATE---BACKEND](https://github.com/mariacazorla/STUDUDATE---BACKEND).
 - Prompt de IA usado: el del bloque "9 · Segundo despliegue y cierre" del Sprint 2, que está entero en [AI_LOG.md](AI_LOG.md).
+
+### 2026-11-25 · Segundo despliegue: el fix de nginx (`fix` en `develop`)
+
+- En el primer despliegue en el servidor, al recrear el contenedor de la API con un `.env` nuevo, la API cambió de IP interna y el nginx de la web
+  siguió apuntando a la vieja (había resuelto `api` una sola vez, al arrancar): `/api` daba 502 hasta reiniciar la web. Arreglo en
+  `apps/web/nginx/studate-app.conf`: `resolver 127.0.0.11 valid=10s` (el DNS de Docker) y el nombre en una variable (`set $api`), con un `rewrite`
+  para quitar el prefijo `/api` (con variables, `proxy_pass` no puede quitarlo con la barra final). Probado en local con el compose: tras
+  `docker compose up -d --force-recreate api`, `/api/ping` sigue respondiendo y `/socket.io` da 200 sin reiniciar la web.
+- La web está desplegada en `https://ea3.upc.edu` y probada desde fuera (login, sesión al recargar, chat, backoffice). El proxy de la UPC no deja
+  pasar WebSocket, así que socket.io va por polling; funciona igual.
