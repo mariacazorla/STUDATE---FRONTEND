@@ -20,6 +20,8 @@ export * from './services/date.service';
 export * from './services/plan.service';
 export * from './services/orla.service';
 export * from './services/chat.service';
+export * from './services/block.service';
+export * from './services/report.service';
 
 // La sesión (el usuario que ha entrado)
 export * from './stores/session';

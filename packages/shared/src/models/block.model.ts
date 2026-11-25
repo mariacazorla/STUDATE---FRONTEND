@@ -9,6 +9,14 @@ export interface Block {
   createdAt: string;
 }
 
+// Un bloqueo mío tal como lo devuelve GET /blocks: la persona bloqueada viene con lo justo para enseñarla
+export interface MyBlock {
+  _id: string;
+  blocker: string;
+  blocked: { _id: string; name: string; degree?: string; photo?: string };
+  createdAt: string;
+}
+
 // Lo que se envía al bloquear: a quién. Quién bloquea lo sabe la API por el token
 export interface CreateBlock {
   blocked: string;
